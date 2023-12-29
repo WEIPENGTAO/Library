@@ -9,7 +9,6 @@ manager = Blueprint('manager', __name__, url_prefix='/manager')
 @manager.route('/register/', methods=['POST'])
 def register():
     # 获取前端传来的数据
-    print(request.form)
     work_num = request.args.get('work_num')
     name = request.args.get('name')
     password = request.args.get('password')
