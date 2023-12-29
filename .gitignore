@@ -1,0 +1,5 @@
+*.xlsx
+*.docx
+sql
+.idea
+__pycache__
