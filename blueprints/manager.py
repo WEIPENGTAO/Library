@@ -7,6 +7,8 @@ from flask_mail import Message
 from exts import db, mail
 from models.captcha import Captcha
 from models.manager import Manager
+from models.booktable import BookTable
+from models.book import Book
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
