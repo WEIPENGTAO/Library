@@ -13,7 +13,9 @@ reader = Blueprint('reader', __name__, url_prefix='/reader')
 
 @reader.route('/captcha/', methods=['POST'])
 def captcha():
-    email = request.args.get('email')
+    data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
+    # 从 JSON 数据中获取 email 和 password
+    email = data.get('email')
     if not email:
         return jsonify({'code': 400, 'message': '参数不完整'})
     reader = Reader.query.filter(Reader.email == email).first()
@@ -34,10 +36,11 @@ def captcha():
 
 @reader.route('/register/', methods=['POST'])
 def register():
-    name = request.form.get('name')
-    password = request.form.get('password')
-    email = request.form.get('email')
-    code = request.form.get('code')
+    data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
+    name = data.get('name')
+    password = data.get('password')
+    email = data.get('email')
+    code = data.get('code')
     if not all([name, password, email, code]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     reader = Reader.query.filter(Reader.email == email).first()
@@ -53,11 +56,13 @@ def register():
 
 @reader.route('/login/', methods=['POST'])
 def login():
-    email = request.form.get('email')
-    password = request.form.get('password')
+    data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
+    # 从 JSON 数据中获取 email 和 password
+    email = data.get('email')
+    password = data.get('password')
     if not all([email, password]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     reader = Reader.query.filter(Reader.email == email, Reader.password == password).first()
     if not reader:
         return jsonify({'code': 400, 'message': '邮箱或密码错误'})
-    return jsonify({'code': 200, 'message': '登录成功'})
+    return jsonify({'code': 200, 'message': '登录成功', 'email': email})
