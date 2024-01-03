@@ -41,7 +41,7 @@
       <el-main>
         <!--        用户信息工具栏-->
         <div class="toolbar">
-          <span>{{ userInfo.username }}</span>
+          <span>{{ userInfo.email }}</span>
           <el-dropdown>
             <el-icon><Setting /></el-icon>
             <template #dropdown>
@@ -85,7 +85,7 @@ import jsCookie from "js-cookie";
 import { ElMessageBox } from "element-plus";
 
 // 判断用户登录状态
-const userLoginState = jsCookie.get("username");
+const userLoginState = jsCookie.get("email");
 if (userLoginState == undefined) {
   ElMessageBox.alert("登录信息已过期，请重新登录", "信息", {
     confirmButtonText: "确认",
@@ -98,7 +98,7 @@ if (userLoginState == undefined) {
 
 // 用户信息
 const userInfo = ref({
-  username: jsCookie.get("username"),
+  email: jsCookie.get("email"),
 });
 
 // 退出系统
@@ -109,7 +109,7 @@ const loginOut = () => {
       // 页面跳转
       router.push("/login");
       // 删除cookie
-      jsCookie.remove("username");
+      jsCookie.remove("email");
     },
   });
 };

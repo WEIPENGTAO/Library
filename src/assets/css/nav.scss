@@ -1,4 +1,4 @@
-$blue:#3C8CE7;
+$blue: #3c8ce7;
 
 // 仪表盘页面样式
 .nav {
@@ -87,14 +87,14 @@ $blue:#3C8CE7;
     }
 
     // 标签栏
-    .tabs{
+    .tabs {
       height: calc(100% - 60px);
-      .el-tabs{
+      .el-tabs {
         height: 100%;
-        .el-tabs__content{
+        .el-tabs__content {
           height: calc(100% - 40px);
           overflow: auto;
-          .el-tab-pane{
+          .el-tab-pane {
             height: 100%;
           }
         }

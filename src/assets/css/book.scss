@@ -21,7 +21,7 @@
     }
 
     // 搜索框样式
-    .el-select div{
+    .el-select div {
       border-top-left-radius: 4px !important;
       border-bottom-left-radius: 4px !important;
     }
@@ -44,7 +44,7 @@
 
   // 图书表格样式
   .book-table {
-      height: calc(100% - 80px);
+    height: calc(100% - 80px);
     .el-col {
       display: flex;
       flex-direction: column;
