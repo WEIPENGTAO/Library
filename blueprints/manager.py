@@ -9,6 +9,8 @@ from models.captcha import Captcha
 from models.manager import Manager
 from models.booktable import BookTable
 from models.book import Book
+from models.lend import Lend
+from models.reserve import Reserve
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
