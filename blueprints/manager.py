@@ -11,6 +11,7 @@ from models.booktable import BookTable
 from models.captcha import Captcha
 from models.lend import Lend
 from models.manager import Manager
+from models.reader import Reader
 from models.reserve import Reserve
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
@@ -241,6 +242,9 @@ def reservebook():
         return jsonify({'code': 400, 'message': '参数不完整'})
     reserve_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     reserve = Reserve(ISBN=ISBN, reader_id=reader_id, reserve_date=reserve_date, reserve_deadline=reserve_deadline)
+    db.session.add(reserve)
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '预约成功'})
 
 
 # 借书管理
@@ -260,3 +264,57 @@ def borrowbook():
     db.session.add(lend)
     db.session.commit()
     return jsonify({'code': 200, 'message': '借阅成功'})
+
+
+# 还书管理
+@manager.route('/returnbook/', methods=['POST'])
+def returnbook():
+    data = request.json
+    book_id = data.get('book_id')
+    reader_id = data.get('reader_id')
+    if not all([book_id, reader_id]):
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    book = Book.query.filter(Book.id == book_id, Book.status == '已借出').first()
+    if not book:
+        return jsonify({'code': 400, 'message': '该图书不存在或未借出'})
+    return_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    fine = 0
+    if return_date > book.due_date:
+        fine = (time.time() - time.mktime(time.strptime(book.due_date, '%Y-%m-%d %H:%M:%S'))) / 60 / 60 / 24 * 0.1
+    book.status = '未借出'
+    reader = book.reader
+    reader.fine += fine
+    ISBN = book.ISBN
+    reserve = Reserve.query.filter(Reserve.ISBN == ISBN, Reserve.status == '预约未失效').first()
+    if reserve:
+        reserve.status = '预约已失效'
+        # 发送邮件通知
+        reader = reserve.reader
+        message = Message(subject='图书管理系统预约通知', recipients=[reader.email],
+                          body='您预约的图书《' + book.booktable.name + '》已归还，请及时借阅')
+        mail.send(message)
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '还书成功'})
+
+
+# 通知管理
+@manager.route('/notice/', methods=['POST'])
+def notice():
+    # 1.对于已到期且未归还的图书，系统通过Email自动通知读者
+    lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                              Lend.status == '未归还').all()
+    for lend in lends:
+        reader = lend.reader
+        book = lend.book
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
+        mail.send(message)
+    # 2.若读者预约的书已到，系统则自动通过Email通知该读者来办理借书手续。
+    reserves = Reserve.query.filter(Reserve.status == '预约未失效').all()
+    for reserve in reserves:
+        reader = reserve.reader
+        booktable = reserve.booktable
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
+        mail.send(message)
+    return jsonify({'code': 200, 'message': '通知成功'})
