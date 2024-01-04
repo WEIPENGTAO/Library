@@ -34,10 +34,10 @@ def captcha():
 
 @reader.route('/register/', methods=['POST'])
 def register():
-    name = request.form.get('name')
-    password = request.form.get('password')
-    email = request.form.get('email')
-    code = request.form.get('code')
+    name = request.args.get('name')
+    password = request.args.get('password')
+    email = request.args.get('email')
+    code = request.args.get('code')
     if not all([name, password, email, code]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     reader = Reader.query.filter(Reader.email == email).first()
@@ -53,11 +53,12 @@ def register():
 
 @reader.route('/login/', methods=['POST'])
 def login():
-    email = request.form.get('email')
-    password = request.form.get('password')
+    email = request.args.get('email')
+    password = request.args.get('password')
+    print(email, password)
     if not all([email, password]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     reader = Reader.query.filter(Reader.email == email, Reader.password == password).first()
     if not reader:
         return jsonify({'code': 400, 'message': '邮箱或密码错误'})
-    return jsonify({'code': 200, 'message': '登录成功'})
+    return jsonify({'code': 200, 'message': '登录成功', 'email': email})
