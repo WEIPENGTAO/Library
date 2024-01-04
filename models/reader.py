@@ -1,5 +1,3 @@
-from sqlalchemy import CheckConstraint
-
 from exts import db
 
 
@@ -16,6 +14,6 @@ class Reader(db.Model):
                            comment='一名读者最多只能借阅十本图书，且每本图书最多只能借两个月')
 
     __table_args__ = (
-        CheckConstraint('fine >= 0', name='check_fine'),
-        CheckConstraint('borrow_num >= 0 AND borrow_num <= 10', name='check_borrow_num'),
+        db.CheckConstraint('fine >= 0', name='check_fine'),
+        db.CheckConstraint('borrow_num >= 0 AND borrow_num <= 10', name='check_reader_borrow_num'),
     )

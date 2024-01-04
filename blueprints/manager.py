@@ -1,13 +1,17 @@
 import random
 import string
+import time
 
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
 
 from exts import db, mail
+from models.book import Book
 from models.booktable import BookTable
 from models.captcha import Captcha
+from models.lend import Lend
 from models.manager import Manager
+from models.reserve import Reserve
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
@@ -115,12 +119,13 @@ def addbooktable():
     publish = data.get('publish')
     pub_date = data.get('pub_date')
     manager_id = data.get('manager_id')
-    num = data.get('num')
     version = data.get('version')
-    if not all([name, author, ISBN, price, publish, pub_date, manager_id, num, version]):
+    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version]):
         return jsonify({'code': 400, 'message': '参数不完整'})
+    if BookTable.query.filter(BookTable.ISBN == ISBN).first():
+        return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,
-                          manager_id=manager_id, num=num, version=version)
+                          manager_id=manager_id, num=0, version=version)
     db.session.add(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '添加成功'})
@@ -171,6 +176,22 @@ def updatebooktable():
     return jsonify({'code': 200, 'message': '修改成功'})
 
 
+# 校对图书数量
+@manager.route('/checkbooktable/', methods=['POST'])
+def checkbooktable():
+    # 得到所有图书的ISBN
+    booktables = BookTable.query.all()
+    ISBN_list = []
+    for booktable in booktables:
+        ISBN_list.append(booktable.ISBN)
+    # 更新图书数量
+    for ISBN in ISBN_list:
+        booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
+        booktable.num = Book.query.filter(Book.ISBN == ISBN).count()
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '校对成功'})
+
+
 # 分页展示图书表
 @manager.route('/showbooktable/', methods=['POST'])
 def showbooktable():
@@ -187,3 +208,55 @@ def showbooktable():
              'publish': booktable.publish, 'pub_date': booktable.pub_date, 'manager_id': booktable.manager_id,
              'num': booktable.num, 'version': booktable.version})
     return jsonify({'code': 200, 'message': '查询成功', 'booktables': booktable_list})
+
+
+# 入库管理
+@manager.route('/addbook/', methods=['POST'])
+def addbook():
+    data = request.json
+    ISBN = data.get('ISBN')
+    location = data.get('location')
+    manager_id = data.get('manager_id')
+    if not all([ISBN, location, manager_id]):
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    status = '不外借'
+    if location == '图书流通室':
+        status = '未借出'
+    book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status)
+    db.session.add(book)
+    booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
+    booktable.num += 1
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '入库成功'})
+
+
+# 预约管理
+@manager.route('/reservebook/', methods=['POST'])
+def reservebook():
+    data = request.json
+    ISBN = data.get('ISBN')
+    reader_id = data.get('reader_id')
+    reserve_deadline = data.get('reserve_deadline')
+    if not all([ISBN, reader_id, reserve_deadline]):
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    reserve_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    reserve = Reserve(ISBN=ISBN, reader_id=reader_id, reserve_date=reserve_date, reserve_deadline=reserve_deadline)
+
+
+# 借书管理
+@manager.route('/borrowbook/', methods=['POST'])
+def borrowbook():
+    data = request.json
+    ISBN = data.get('ISBN')
+    reader_id = data.get('reader_id')
+    if not all([ISBN, reader_id]):
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
+    if not book:
+        return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
+    book.status = '已借出'
+    lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * 60)))
+    db.session.add(lend)
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '借阅成功'})
