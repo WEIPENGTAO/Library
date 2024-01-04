@@ -29,6 +29,7 @@ def register():
         return jsonify({'code': 400, 'message': '验证码错误'})
     manager = Manager(name=name, password=password, email=email)
     db.session.add(manager)
+    db.session.commit()
     return jsonify({'code': 200, 'message': '注册成功'})
 
 
@@ -68,6 +69,39 @@ def login():
     if manager.password != password:
         return jsonify({'code': 400, 'message': '密码错误'})
     return jsonify({'code': 200, 'message': '登录成功', 'email': email})
+
+
+# 登出
+@manager.route('/logout/', methods=['POST'])
+def logout():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    manager = Manager.query.filter(Manager.email == email).first()
+    if not manager:
+        return jsonify({'code': 400, 'message': '该邮箱不存在'})
+    return jsonify({'code': 200, 'message': '登出成功', 'email': email})
+
+
+# 通过验证码修改密码
+@manager.route('/updatepassword/', methods=['POST'])
+def updatepassword():
+    data = request.json
+    email = data.get('email')
+    code = data.get('code')
+    password = data.get('password')
+    if not all([email, code, password]):
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    manager = Manager.query.filter(Manager.email == email).first()
+    if not manager:
+        return jsonify({'code': 400, 'message': '该邮箱不存在'})
+    captcha = Captcha.query.filter(Captcha.email == email).first()
+    if not captcha or captcha.code != code:
+        return jsonify({'code': 400, 'message': '验证码错误'})
+    manager.password = password
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '修改成功'})
 
 
 # 添加图书表
@@ -145,8 +179,11 @@ def showbooktable():
     if not page:
         return jsonify({'code': 400, 'message': '参数不完整'})
     page = int(page)
-    booktables = BookTable.query.paginate(page=page, per_page=10, error_out=False)
+    booktables = BookTable.query.paginate(page=page, per_page=20, error_out=False)
     booktable_list = []
     for booktable in booktables.items:
-        booktable_list.append(booktable.to_dict())
+        booktable_list.append(
+            {'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author, 'price': booktable.price,
+             'publish': booktable.publish, 'pub_date': booktable.pub_date, 'manager_id': booktable.manager_id,
+             'num': booktable.num, 'version': booktable.version})
     return jsonify({'code': 200, 'message': '查询成功', 'booktables': booktable_list})
