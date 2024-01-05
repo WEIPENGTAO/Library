@@ -5,7 +5,7 @@ import time
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
 
-from exts import db, mail
+from exts import db, mail, scheduler
 from models.book import Book
 from models.booktable import BookTable
 from models.captcha import Captcha
@@ -14,6 +14,42 @@ from models.manager import Manager
 from models.reserve import Reserve
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
+
+
+@scheduler.task('cron', id='do_job_1', day='*', hour='0', minute='0', second='0')
+def job1():
+    # 1.对于已到期且未归还的图书，系统通过Email自动通知读者
+    lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                              Lend.status == '未归还').all()
+    for lend in lends:
+        reader = lend.reader
+        book = lend.book
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
+        mail.send(message)
+    # 2.若读者预约的书已到，系统则自动通过Email通知该读者来办理借书手续。
+    reserves = Reserve.query.filter().all()
+    for reserve in reserves:
+        reader = reserve.reader
+        booktable = reserve.booktable
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
+        mail.send(message)
+    # 3.若预约已超时，则自动删除该预约记录。
+    reserves = Reserve.query.filter(
+        time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) - Reserve.reserve_date > Reserve.reserve_deadline).all()
+    for reserve in reserves:
+        reserve.delete()
+    # 4.校对图书数量
+    booktables = BookTable.query.all()
+    ISBN_list = []
+    for booktable in booktables:
+        ISBN_list.append(booktable.ISBN)
+    # 更新图书数量
+    for ISBN in ISBN_list:
+        booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
+        booktable.num = Book.query.filter(Book.ISBN == ISBN).count()
+    db.commit()
 
 
 @manager.route('/register/', methods=['POST'])
@@ -173,22 +209,6 @@ def updatebooktable():
     return jsonify({'code': 200, 'message': '修改成功'})
 
 
-# 校对图书数量
-@manager.route('/checkbooktable/', methods=['POST'])
-def checkbooktable():
-    # 得到所有图书的ISBN
-    booktables = BookTable.query.all()
-    ISBN_list = []
-    for booktable in booktables:
-        ISBN_list.append(booktable.ISBN)
-    # 更新图书数量
-    for ISBN in ISBN_list:
-        booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
-        booktable.num = Book.query.filter(Book.ISBN == ISBN).count()
-    db.session.commit()
-    return jsonify({'code': 200, 'message': '校对成功'})
-
-
 # 分页展示图书表
 @manager.route('/showbooktable/', methods=['GET'])
 def showbooktable():
@@ -313,26 +333,3 @@ def returnbook():
         mail.send(message)
     db.session.commit()
     return jsonify({'code': 200, 'message': '还书成功'})
-
-
-# 通知管理
-@manager.route('/notice/', methods=['POST'])
-def notice():
-    # 1.对于已到期且未归还的图书，系统通过Email自动通知读者
-    lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                              Lend.status == '未归还').all()
-    for lend in lends:
-        reader = lend.reader
-        book = lend.book
-        message = Message(subject='图书管理系统通知', recipients=[reader.email],
-                          body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
-        mail.send(message)
-    # 2.若读者预约的书已到，系统则自动通过Email通知该读者来办理借书手续。
-    reserves = Reserve.query.filter().all()
-    for reserve in reserves:
-        reader = reserve.reader
-        booktable = reserve.booktable
-        message = Message(subject='图书管理系统通知', recipients=[reader.email],
-                          body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
-        mail.send(message)
-    return jsonify({'code': 200, 'message': '通知成功'})

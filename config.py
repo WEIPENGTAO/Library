@@ -14,3 +14,9 @@ MAIL_USE_SSL = True
 MAIL_USERNAME = '614151250@qq.com'
 MAIL_PASSWORD = 'rmpbcrshuonwbfaj'
 MAIL_DEFAULT_SENDER = '614151250@qq.com'
+
+# 定时任务配置信息
+SCHEDULER_API_ENABLED = True
+
+# 跨域配置信息
+JSON_AS_ASCII = False
