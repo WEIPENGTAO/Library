@@ -16,6 +16,28 @@ from models.reserve import Reserve
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
 
+# 事件监听器
+@manager.before_request
+def before_request():
+    # 1.对于已到期且未归还的图书，系统通过Email自动通知读者
+    lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                              Lend.status == '未归还').all()
+    for lend in lends:
+        reader = lend.reader
+        book = lend.book
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
+        mail.send(message)
+    # 2.若读者预约的书已到，系统则自动通过Email通知该读者来办理借书手续。
+    reserves = Reserve.query.filter(Reserve.status == '预约未失效').all()
+    for reserve in reserves:
+        reader = reserve.reader
+        booktable = reserve.booktable
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
+        mail.send(message)
+
+
 @manager.route('/register/', methods=['POST'])
 def register():
     data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
@@ -192,19 +214,19 @@ def checkbooktable():
 # 分页展示图书表
 @manager.route('/showbooktable/', methods=['GET'])
 def showbooktable():
-    page = request.args.get("page")
-    per_page = request.args.get("per_page")
+    page = request.args.get("pageNum")
+    per_page = request.args.get("pageSize")
     if not page:
         return jsonify({'code': 400, 'message': '参数不完整'})
     page = int(page)
     per_page = int(per_page)
-    booktables = BookTable.query.paginate(page=page, per_page=20, error_out=False)
+    booktables = BookTable.query.paginate(page=page, per_page=per_page, error_out=False)
     booktable_list = []
     for booktable in booktables.items:
         booktable_list.append(
-            {'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author, 'price': booktable.price,
-             'publish': booktable.publish, 'pub_date': booktable.pub_date, 'manager_id': booktable.manager_id,
-             'num': booktable.num, 'version': booktable.version})
+            {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
+             'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
+             'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version})
     return jsonify({'code': 200, 'message': '查询成功', 'booktables': booktable_list})
 
 
