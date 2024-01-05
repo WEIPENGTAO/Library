@@ -190,13 +190,14 @@ def checkbooktable():
 
 
 # 分页展示图书表
-@manager.route('/showbooktable/', methods=['POST'])
+@manager.route('/showbooktable/', methods=['GET'])
 def showbooktable():
-    data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
-    page = data.get('page')
+    page = request.args.get("page")
+    per_page = request.args.get("per_page")
     if not page:
         return jsonify({'code': 400, 'message': '参数不完整'})
     page = int(page)
+    per_page = int(per_page)
     booktables = BookTable.query.paginate(page=page, per_page=20, error_out=False)
     booktable_list = []
     for booktable in booktables.items:
