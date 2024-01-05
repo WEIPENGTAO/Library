@@ -16,28 +16,6 @@ from models.reserve import Reserve
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
 
-# 事件监听器
-@manager.before_request
-def before_request():
-    # 1.对于已到期且未归还的图书，系统通过Email自动通知读者
-    lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                              Lend.status == '未归还').all()
-    for lend in lends:
-        reader = lend.reader
-        book = lend.book
-        message = Message(subject='图书管理系统通知', recipients=[reader.email],
-                          body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
-        mail.send(message)
-    # 2.若读者预约的书已到，系统则自动通过Email通知该读者来办理借书手续。
-    reserves = Reserve.query.filter(Reserve.status == '预约未失效').all()
-    for reserve in reserves:
-        reader = reserve.reader
-        booktable = reserve.booktable
-        message = Message(subject='图书管理系统通知', recipients=[reader.email],
-                          body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
-        mail.send(message)
-
-
 @manager.route('/register/', methods=['POST'])
 def register():
     data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
@@ -290,9 +268,14 @@ def borrowbook():
     data = request.json
     ISBN = data.get('ISBN')
     reader_id = data.get('reader_id')
-    if not all([ISBN, reader_id]):
-        return jsonify({'code': 400, 'message': '参数不完整'})
-    book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
+    book_id = data.get('book_id')
+    if not all([ISBN, reader_id]) and not all([reader_id, book_id]):
+        return jsonify({'code': 400, 'message': '请提供ISBN、读者ID或者图书ID、读者ID'})
+    book = None
+    if book_id:
+        book = Book.query.filter(Book.id == book_id, Book.status == '未借出').first()
+    if not book and ISBN:
+        book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
     book.status = '已借出'
@@ -322,9 +305,8 @@ def returnbook():
     reader = book.reader
     reader.fine += fine
     ISBN = book.ISBN
-    reserve = Reserve.query.filter(Reserve.ISBN == ISBN, Reserve.status == '预约未失效').first()
+    reserve = Reserve.query.filter(Reserve.ISBN == ISBN).first()
     if reserve:
-        reserve.status = '预约已失效'
         reader = reserve.reader
         message = Message(subject='图书管理系统预约通知', recipients=[reader.email],
                           body='您预约的图书《' + book.booktable.name + '》已归还，请及时借阅')
@@ -346,7 +328,7 @@ def notice():
                           body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
         mail.send(message)
     # 2.若读者预约的书已到，系统则自动通过Email通知该读者来办理借书手续。
-    reserves = Reserve.query.filter(Reserve.status == '预约未失效').all()
+    reserves = Reserve.query.filter().all()
     for reserve in reserves:
         reader = reserve.reader
         booktable = reserve.booktable
