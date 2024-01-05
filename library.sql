@@ -11,7 +11,7 @@
  Target Server Version : 80035
  File Encoding         : 65001
 
- Date: 05/01/2024 19:31:00
+ Date: 05/01/2024 19:46:10
 */
 
 SET NAMES utf8mb4;
@@ -29,7 +29,7 @@ CREATE TABLE `alembic_version`  (
 -- ----------------------------
 -- Records of alembic_version
 -- ----------------------------
-INSERT INTO `alembic_version` VALUES ('7abcf6954187');
+INSERT INTO `alembic_version` VALUES ('ce6e7740ba40');
 
 -- ----------------------------
 -- Table structure for book
@@ -2191,12 +2191,14 @@ CREATE TABLE `reserve`  (
   `reader_id` int NULL DEFAULT NULL,
   `reserve_date` datetime NOT NULL COMMENT '预约日期',
   `reserve_deadline` int NOT NULL COMMENT '预约期限（天）',
-  `book_id` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `book_id` int NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `booktable_ISBN`(`booktable_ISBN` ASC) USING BTREE,
   INDEX `reader_id`(`reader_id` ASC) USING BTREE,
+  INDEX `book_id`(`book_id` ASC) USING BTREE,
   CONSTRAINT `reserve_ibfk_1` FOREIGN KEY (`booktable_ISBN`) REFERENCES `booktable` (`ISBN`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `reserve_ibfk_2` FOREIGN KEY (`reader_id`) REFERENCES `reader` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `reserve_ibfk_2` FOREIGN KEY (`reader_id`) REFERENCES `reader` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `reserve_ibfk_3` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
