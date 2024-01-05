@@ -8,5 +8,4 @@ class Reserve(db.Model):
     reader_id = db.Column(db.Integer, db.ForeignKey('reader.id'))
     reserve_date = db.Column(db.DateTime, comment='预约日期', nullable=False)
     reserve_deadline = db.Column(db.Integer, comment='预约期限（天）', default=3, nullable=False)
-    status = db.Column(db.String(10),  nullable=True)
-
+    book_id = db.Column(db.String(10),  nullable=True)
