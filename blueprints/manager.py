@@ -11,7 +11,6 @@ from models.booktable import BookTable
 from models.captcha import Captcha
 from models.lend import Lend
 from models.manager import Manager
-from models.reader import Reader
 from models.reserve import Reserve
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
@@ -45,9 +44,6 @@ def captcha():
     email = data.get('email')
     if not email:
         return jsonify({'code': 400, 'message': '参数不完整'})
-    manager = Manager.query.filter(Manager.email == email).first()
-    if manager:
-        return jsonify({'code': 400, 'message': '该邮箱已存在'})
     code = ''.join(random.sample(string.digits * 6, 6))
     captcha = Captcha(email=email, code=code)
     if Captcha.query.filter(Captcha.email == email).first():
@@ -73,7 +69,7 @@ def login():
         return jsonify({'code': 400, 'message': '该邮箱不存在'})
     if manager.password != password:
         return jsonify({'code': 400, 'message': '密码错误'})
-    return jsonify({'code': 200, 'message': '登录成功', 'email': email})
+    return jsonify({'code': 200, 'message': '登录成功', 'email': email, 'manager_id': manager.id})
 
 
 # 登出
@@ -194,13 +190,14 @@ def checkbooktable():
 
 
 # 分页展示图书表
-@manager.route('/showbooktable/', methods=['POST'])
+@manager.route('/showbooktable/', methods=['GET'])
 def showbooktable():
-    data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
-    page = data.get('page')
+    page = request.args.get("page")
+    per_page = request.args.get("per_page")
     if not page:
         return jsonify({'code': 400, 'message': '参数不完整'})
     page = int(page)
+    per_page = int(per_page)
     booktables = BookTable.query.paginate(page=page, per_page=20, error_out=False)
     booktable_list = []
     for booktable in booktables.items:
@@ -211,6 +208,22 @@ def showbooktable():
     return jsonify({'code': 200, 'message': '查询成功', 'booktables': booktable_list})
 
 
+# 根据ISBN查询图书信息
+@manager.route('/querybook/', methods=['POST'])
+def querybook():
+    data = request.json
+    ISBN = data.get('ISBN')
+    if not ISBN:
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    books = Book.query.filter(Book.ISBN == ISBN).all()
+    book_list = []
+    for book in books:
+        book_list.append(
+            {'id': book.id, 'ISBN': book.ISBN, 'location': book.location, 'manager_id': book.manager_id,
+             'status': book.status})
+    return jsonify({'code': 200, 'message': '查询成功', 'books': book_list})
+
+
 # 入库管理
 @manager.route('/addbook/', methods=['POST'])
 def addbook():
@@ -218,15 +231,17 @@ def addbook():
     ISBN = data.get('ISBN')
     location = data.get('location')
     manager_id = data.get('manager_id')
-    if not all([ISBN, location, manager_id]):
+    num = data.get('num')
+    if not all([ISBN, location, manager_id, num]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     status = '不外借'
     if location == '图书流通室':
         status = '未借出'
-    book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status)
-    db.session.add(book)
+    for i in range(num):
+        book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status)
+        db.session.add(book)
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
-    booktable.num += 1
+    booktable.num += num
     db.session.commit()
     return jsonify({'code': 200, 'message': '入库成功'})
 
@@ -288,7 +303,6 @@ def returnbook():
     reserve = Reserve.query.filter(Reserve.ISBN == ISBN, Reserve.status == '预约未失效').first()
     if reserve:
         reserve.status = '预约已失效'
-        # 发送邮件通知
         reader = reserve.reader
         message = Message(subject='图书管理系统预约通知', recipients=[reader.email],
                           body='您预约的图书《' + book.booktable.name + '》已归还，请及时借阅')
