@@ -73,7 +73,7 @@ def login():
         return jsonify({'code': 400, 'message': '该邮箱不存在'})
     if manager.password != password:
         return jsonify({'code': 400, 'message': '密码错误'})
-    return jsonify({'code': 200, 'message': '登录成功', 'email': email})
+    return jsonify({'code': 200, 'message': '登录成功', 'email': email, 'id': manager.id})
 
 
 # 登出
@@ -194,14 +194,16 @@ def checkbooktable():
 
 
 # 分页展示图书表
-@manager.route('/showbooktable/', methods=['POST'])
+@manager.route('/showbooktable/', methods=['GET'])
 def showbooktable():
-    data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
-    page = data.get('page')
+    # data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
+    page = request.args.get('pageNum')
+    size = request.args.get('pageSize')
     if not page:
         return jsonify({'code': 400, 'message': '参数不完整'})
     page = int(page)
-    booktables = BookTable.query.paginate(page=page, per_page=20, error_out=False)
+    size = int(size)
+    booktables = BookTable.query.paginate(page=page, per_page=size, error_out=False)
     booktable_list = []
     for booktable in booktables.items:
         booktable_list.append(
@@ -211,7 +213,7 @@ def showbooktable():
     return jsonify({'code': 200, 'message': '查询成功', 'booktables': booktable_list})
 
 
-# 入库管理
+# 图书入库管理
 @manager.route('/addbook/', methods=['POST'])
 def addbook():
     data = request.json
