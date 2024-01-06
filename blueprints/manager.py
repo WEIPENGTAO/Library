@@ -142,6 +142,12 @@ def updatepassword():
     return jsonify({'code': 200, 'message': '修改成功'})
 
 
+
+
+
+
+
+
 # 添加图书表
 @manager.route('/addbooktable/', methods=['POST'])
 def addbooktable():
@@ -175,6 +181,8 @@ def deletebooktable():
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     if not booktable:
         return jsonify({'code': 400, 'message': '该图书不存在'})
+    elif booktable.num > 0:
+        return jsonify({'code': 400, 'message': '图书表单中尚且存在相关的图书，不允许直接删除书目。'})
     db.session.delete(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功'})
@@ -245,6 +253,28 @@ def showbooktable():
                     })
 
 
+@manager.route('/checkbooktable/', methods=['POST'])
+def checkbooktable():
+    data = request.get_json()
+    ISBN = data.get('ISBN')
+    if not ISBN :
+        return jsonify({'code': 400, 'message': '参数不完整'})
+    item=BookTable.query.filter_by(ISBN=ISBN).first()
+    if not item :
+        return jsonify({'code':400,'message':'不存在该条图书信息。'})
+    print(item)
+    result_list = [
+        {
+            'name': item.name,
+            'ISBN': item.ISBN,
+            'author': item.author,
+            'version': item.version,
+            'publish': item.publish,
+            'num':item.num,
+            'remaining': item.num- Book.query.filter_by(ISBN=ISBN,status="已借出").count()
+        }
+    ]
+    return jsonify({'code':200,'message':result_list})
 
 
 
@@ -365,6 +395,8 @@ def deletebook():
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功！'})
 
+
+
 @manager.route('/updatebook/', methods=['POST'])
 def updateBook():
     data = request.json
@@ -448,7 +480,8 @@ def borrowbook():
     ISBN = data.get('ISBN')
     reader_id = data.get('reader_id')
     book_id = data.get('book_id')
-    if not all([ISBN, reader_id]) and not all([reader_id, book_id]):
+    reserve_time=data.get('reserve_time')
+    if not ((reader_id and book_id) or (ISBN and book_id)):
         return jsonify({'code': 400, 'message': '请提供ISBN、读者ID或者图书ID、读者ID'})
     book = None
     if book_id:
@@ -457,9 +490,13 @@ def borrowbook():
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
+    if not reserve_time:
+        return jsonify({'code': 400, 'message':"未提供预约天数。"})
+    if reserve_time>60:
+        return jsonify({'code':400,'message':"超过最大预约天数60天。"})
     book.status = '已借出'
     lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * 60)))
+                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * reserve_time)))
     db.session.add(lend)
     db.session.commit()
     return jsonify({'code': 200, 'message': '借阅成功'})
