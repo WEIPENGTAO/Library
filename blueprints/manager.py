@@ -4,6 +4,7 @@ import time
 
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
+from sqlalchemy import and_
 
 from exts import db, mail, scheduler
 from models.book import Book
@@ -192,56 +193,140 @@ def updatebooktable():
     manager_id = data.get('manager_id')
     num = data.get('num')
     version = data.get('version')
-    if not all([ISBN, name, author, price, publish, pub_date, manager_id, num, version]):
-        return jsonify({'code': 400, 'message': '参数不完整'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     if not booktable:
-        return jsonify({'code': 400, 'message': '该图书不存在'})
-    booktable.name = name
-    booktable.author = author
-    booktable.price = price
-    booktable.publish = publish
-    booktable.pub_date = pub_date
-    booktable.manager_id = manager_id
-    booktable.num = num
-    booktable.version = version
+        return jsonify({'code': 400, 'message': '该图书表单不存在！'})
+    if ISBN:
+        booktable.ISBN = ISBN
+    elif name:
+        booktable.name = name
+    elif author:
+        booktable.author = author
+    elif publish:
+        booktable.publish = publish
+    elif pub_date :
+        booktable.pub_date =pub_date
+    elif manager_id:
+        booktable.manager_id = manager_id
+    elif version:
+        booktable.version = version
+    elif num>=0:
+        booktable.num = num
+    else:
+        return jsonify({'code': 400, 'message': '无修改信息！'})
+
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
 
 
-# 分页展示图书表
-@manager.route('/showbooktable/', methods=['GET'])
+# 分页展示图书表,增加默认字段，可以不强制输入参数
+@manager.route('/showbooktable/', methods=['POST'])
 def showbooktable():
-    page = request.args.get("pageNum")
-    per_page = request.args.get("pageSize")
-    if not page:
-        return jsonify({'code': 400, 'message': '参数不完整'})
-    page = int(page)
-    per_page = int(per_page)
+    # 获取分页参数，如果请求中没有指定，则使用默认值
+    data = request.get_json()
+    page = int(data.get('page', 1))  # 默认值为1
+    per_page = int(data.get('per_page', 20))  # 默认值为20
     booktables = BookTable.query.paginate(page=page, per_page=per_page, error_out=False)
     booktable_list = []
+    # 查询BookTable的总数
+    total_count = BookTable.query.count()
     for booktable in booktables.items:
         booktable_list.append(
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
              'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
              'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version})
-    return jsonify({'code': 200, 'message': '查询成功', 'booktables': booktable_list})
+
+    return jsonify({'code': 200,
+                    'message': '查询成功',
+                    'total_count': booktables.total,
+                    'booktables': booktable_list,
+                    'page':  booktables.page,
+                    'per_page': booktables.per_page,
+                    })
 
 
-# 根据ISBN查询图书信息
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 根据ISBN查询图书信息,添加分页查询和模糊查询功能,可以兼容以前的版本
 @manager.route('/querybook/', methods=['POST'])
 def querybook():
-    data = request.json
+    # 获取分页参数
+    data = request.get_json()
+    page = int(data.get('page', 1))
+    per_page = int(data.get('per_page', 20))
+    # 获取查询参数
+    name = data.get('name')
+    author = data.get('author')
+    version = data.get('version')
+    publish = data.get('publish')
     ISBN = data.get('ISBN')
-    if not ISBN:
-        return jsonify({'code': 400, 'message': '参数不完整'})
-    books = Book.query.filter(Book.ISBN == ISBN).all()
-    book_list = []
-    for book in books:
-        book_list.append(
-            {'id': book.id, 'ISBN': book.ISBN, 'location': book.location, 'manager_id': book.manager_id,
-             'status': book.status})
-    return jsonify({'code': 200, 'message': '查询成功', 'books': book_list})
+
+    # 构建查询条件
+    conditions = []
+    if name:
+        conditions.append(BookTable.name.ilike(f'%{name}%'))
+    if author:
+        conditions.append(BookTable.author.ilike(f'%{author}%'))
+    if version:
+        conditions.append(BookTable.version.ilike(f'%{version}%'))
+    if publish:
+        conditions.append(BookTable.publish.ilike(f'%{publish}%'))
+    if ISBN:
+        conditions.append(BookTable.ISBN.ilike(f'%{ISBN}%'))
+
+    # 查询 BookTable 表格
+    booktables = BookTable.query.filter(and_(*conditions)).all()
+    print(booktables)
+    # 判断是否找到符合条件的书籍
+    if not booktables:
+        return jsonify({'code': 400, 'message': '没有找到符合条件的书籍'})
+
+    # 获取 ISBN 属性列表
+    booktable_ISBN_list = [booktable.ISBN for booktable in booktables]
+
+    books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
+                                                                                             per_page=per_page,
+                                                                                              error_out=False)
+    result_list = [
+        {
+            'name': booktable.name,
+            'ISBN': booktable.ISBN,
+            'author': booktable.author,
+            'version': booktable.version,
+            'publish': booktable.publish,
+            'num': booktable.num,
+            'book_id': book.book_id,
+            'location': book.location,
+            'status': book.status if book else None
+        }
+        for booktable in booktables
+        for book in books
+        if book.ISBN == booktable.ISBN
+    ]
+    # 构造响应数据
+    response = {
+        'code': 200,
+        'message': '查询成功',
+        'books':result_list,
+        'total_count': books.total,
+        'page': books.page,
+        'per_page': books.per_page
+    }
+
+    return jsonify(response)
+
+
 
 
 # 入库管理
@@ -251,19 +336,88 @@ def addbook():
     ISBN = data.get('ISBN')
     location = data.get('location')
     manager_id = data.get('manager_id')
-    num = data.get('num')
-    if not all([ISBN, location, manager_id, num]):
+    num = int(data.get('num',0))
+
+    if not all([ISBN, location, manager_id])  and num>=0:
         return jsonify({'code': 400, 'message': '参数不完整'})
     status = '不外借'
     if location == '图书流通室':
         status = '未借出'
-    for i in range(num):
-        book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status)
-        db.session.add(book)
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
+    for i in range(num):                                                         #逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
+        book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,book_id="C"+ISBN[16:19]+"."+str(booktable.num+i))
+        db.session.add(book)
+
     booktable.num += num
     db.session.commit()
     return jsonify({'code': 200, 'message': '入库成功'})
+
+@manager.route('/deletebook/', methods=['POST'])
+def deletebook():
+    data = request.json
+    book_id = data.get('book_id')
+    if not all([book_id]):
+        return jsonify({'code': 400, 'message': "输入空的图书编号"})
+    book=Book.query.filter_by(book_id=book_id).first()
+    if book is None:
+        return jsonify({'code':400,'message':"该图书不存在。"})
+    db.session.delete(book)
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '删除成功！'})
+
+@manager.route('/updatebook/', methods=['POST'])
+def updateBook():
+    data = request.json
+    book_id = data.get('book_id')
+    ISBN = data.get('ISBN')
+    location = data.get('location')
+    manager_id = data.get('manager_id')#这个需要从前端获得，只有管理员登录后才行，所以对此字段不考虑外检约束
+    if not book_id :
+        return jsonify({'code': 400, 'message': '输入空白的图书编号信息！'})
+    book = Book.query.filter_by(book_id=book_id).first()
+    if book is None:
+        return jsonify({'code': 400,'message':"不存在该图书！"})
+    if ISBN:
+        if not BookTable.query.filter_by(ISBN=ISBN).first():
+            return jsonify({'code':400,'message':"无法添加该信息，因为图书表单中不存在该信息。"})
+        book.ISBN = ISBN
+    elif location in ["图书阅览室","图书流通室"]:
+        book.location = location
+    elif manager_id:
+        book.manager_id = manager_id
+    else:
+        return jsonify({'code': 400, 'message': "无修改信息！"})
+    db.session.commit()
+    return  jsonify({'code': 200, 'message': '修改成功！'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # 预约管理
@@ -280,6 +434,11 @@ def reservebook():
     db.session.add(reserve)
     db.session.commit()
     return jsonify({'code': 200, 'message': '预约成功'})
+
+
+
+
+
 
 
 # 借书管理
