@@ -4,8 +4,8 @@ from exts import db
 class Lend(db.Model):
     __tablename__ = 'lend'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    book_id = db.Column(db.Integer, db.ForeignKey('book.id'))
-    reader_id = db.Column(db.Integer, db.ForeignKey('reader.id'))
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id', onupdate='CASCADE', ondelete='CASCADE'))
+    reader_id = db.Column(db.Integer, db.ForeignKey('reader.id', onupdate='CASCADE', ondelete='CASCADE'))
     lend_date = db.Column(db.DateTime)
     return_date = db.Column(db.DateTime, comment='实际还书日期')
     due_date = db.Column(db.DateTime, comment='应还日期')
