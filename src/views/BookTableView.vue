@@ -387,6 +387,8 @@ let formLabelWidth = 120;
 
 // 获取图书数据
 let books = ref();
+// 查询条件数据
+let searchObj = reactive({});
 
 // 显示数据数量选项
 let pageNum = ref(1);
@@ -451,38 +453,56 @@ const searchButton = () => {
 };
 // 搜索图书
 const searchBook = () => {
-  if (searchInput.value != "") {
-    axios
-      .get(
-        "/api/manager/showbooktable?pageNum=" +
-          // searchModel.value +
-          // "/" +
-          // searchInput.value +
-          // "/" +
-          pageNum.value +
-          "&pageSize=" +
-          pageSize.value
-      )
-      .then((resp) => {
-        books.value = resp.data.booktables;
-        pageTotal.value = resp.data.totalElements;
-        const code = resp.data.code;
-        const message = resp.data.message;
-        // 查询失败
-        if (code == 400) {
-          ElMessage({
-            message: message,
-            type: "error",
-          });
-        }
-        // 查询成功
-        if (code == 200) {
-          ElMessage({
-            message: message,
-            type: "success",
-          });
-        }
-      });
+  if (searchModel.value == "name") {
+    searchObj = {
+      name: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchModel.value == "author") {
+    searchObj = {
+      author: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchModel.value == "publish") {
+    searchObj = {
+      publish: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchModel.value == "ISBN") {
+    searchObj = {
+      ISBN: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchModel.value != "") {
+    axios.post("/api/manager/showbooktable", searchObj).then((resp) => {
+      console.log("查询", searchObj);
+      books.value = resp.data.booktables;
+      pageTotal.value = resp.data.totalElements;
+      const code = resp.data.code;
+      const message = resp.data.message;
+      // 查询失败
+      if (code == 400) {
+        ElMessage({
+          message: message,
+          type: "error",
+        });
+      }
+      // 查询成功
+      if (code == 200) {
+        ElMessage({
+          message: message,
+          type: "success",
+        });
+      }
+    });
   }
 };
 
@@ -590,7 +610,7 @@ let editBookForm = reactive({
   ISBN: "",
   pub_date: "",
   manager_id: "",
-  num: 1,
+  num: "",
 });
 
 // 编辑图书按钮
@@ -599,7 +619,6 @@ const editBookButton = (formEl: FormInstance | undefined) => {
   formEl.validate((valid) => {
     if (valid) {
       axios.post("/api/manager/updatebooktable/", editBookForm).then((resp) => {
-        console.log("caf", editBookForm);
         const code = resp.data.code;
         const message = resp.data.message;
         // 编辑失败

@@ -73,10 +73,12 @@
         <el-row class="book-table">
           <el-col>
             <el-table :data="books" height="100%" empty-text="没有数据">
-              <el-table-column fixed prop="id" label="图书ID" width="130" />
+              <el-table-column prop="book_id" label="图书ID" width="130" />
+              <el-table-column prop="name" label="图书名称" />
               <el-table-column prop="ISBN" label="ISBN号码" width="170" />
               <el-table-column prop="location" label="存放位置" />
               <el-table-column prop="status" label="状态" />
+              <el-table-column prop="publish" label="出版社" />
               <el-table-column prop="manager_id" label="经办人" />
               <el-table-column fixed="right" label="操作">
                 <template #default="books">
@@ -206,7 +208,7 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="价格(人民币)"
+              label="存放位置"
               :label-width="formLabelWidth"
               prop="location"
             >
@@ -216,14 +218,13 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="数量(本)"
+              label="状态"
               :label-width="formLabelWidth"
-              prop="version"
+              prop="status"
             >
               <el-input
-                v-model.number="editBookForm.version"
+                v-model.number="editBookForm.status"
                 autocomplete="off"
-                maxlength="3"
               ></el-input>
             </el-form-item>
             <el-form-item
@@ -284,6 +285,8 @@ let formLabelWidth = 120;
 
 // 获取图书数据
 let books = ref();
+// 查询条件数据
+let searchObj = reactive({});
 
 // 显示数据数量选项
 let pageNum = ref(1);
@@ -316,7 +319,7 @@ const changeSize = (value: number) => {
 };
 
 // 搜索框选项
-let searchModel = ref("name");
+let searchModel = ref("ISBN");
 let searchOptions = [
   {
     value: "name",
@@ -348,12 +351,36 @@ const searchButton = () => {
 };
 // 搜索图书
 const searchBook = () => {
-  if (searchInput.value != "") {
-    let obj = {
-      ISBN: searchInput.value,
+  if (searchModel.value == "name") {
+    searchObj = {
+      name: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
     };
-    console.log("faf", obj);
-    axios.post("/api/manager/querybook/", obj).then((resp) => {
+  }
+  if (searchModel.value == "author") {
+    searchObj = {
+      author: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchModel.value == "publish") {
+    searchObj = {
+      publish: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchModel.value == "ISBN") {
+    searchObj = {
+      ISBN: searchInput.value,
+      page: pageNum.value,
+      per_page: pageSize.value,
+    };
+  }
+  if (searchInput.value != "") {
+    axios.post("/api/manager/querybook/", searchObj).then((resp) => {
       books.value = resp.data.books;
       pageTotal.value = resp.data.totalElements;
       const code = resp.data.code;
