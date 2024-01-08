@@ -73,11 +73,23 @@
         <el-row class="book-table">
           <el-col>
             <el-table :data="books" height="100%" empty-text="没有数据">
-              <el-table-column fixed prop="id" label="图书ID" width="130" />
+              <el-table-column fixed prop="id" label="Id" width="50" />
+              <el-table-column prop="name" label="书名" width="130" />
+              <el-table-column prop="author" label="作者" width="170" />
+              <el-table-column prop="publish" label="出版商" width="130" />
               <el-table-column prop="ISBN" label="ISBN号码" width="170" />
-              <el-table-column prop="location" label="存放位置" />
-              <el-table-column prop="status" label="状态" />
+              <el-table-column label="出版年月" prop="pub_date">
+                <template v-slot="{ row }">
+                  <span>{{ formatDate(row.pub_date) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="num" label="册数" />
               <el-table-column prop="manager_id" label="经办人" />
+              <el-table-column label="价格" prop="price">
+                <template v-slot="{ row }">
+                  <span>{{ formatPrice(row.price) }}</span>
+                </template>
+              </el-table-column>
               <el-table-column fixed="right" label="操作">
                 <template #default="books">
                   <el-button
@@ -118,6 +130,26 @@
             class="add-book-form"
           >
             <el-form-item
+              label="书名"
+              :label-width="formLabelWidth"
+              prop="name"
+            >
+              <el-input
+                v-model="addBookForm.name"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="作者"
+              :label-width="formLabelWidth"
+              prop="author"
+            >
+              <el-input
+                v-model="addBookForm.author"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
               label="ISBN号码"
               :label-width="formLabelWidth"
               prop="ISBN"
@@ -128,14 +160,39 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="存放位置"
+              label="价格(人民币)"
               :label-width="formLabelWidth"
-              prop="location"
+              prop="price"
             >
               <el-input
-                v-model="addBookForm.location"
+                v-model="addBookForm.price"
                 autocomplete="off"
               ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="出版社"
+              :label-width="formLabelWidth"
+              prop="publish"
+            >
+              <el-input
+                v-model="addBookForm.publish"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="出版年月"
+              :label-width="formLabelWidth"
+              prop="pub_date"
+            >
+              <el-date-picker
+                v-model="addBookForm.pub_date"
+                type="date"
+                placeholder="选择日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+                class="custom-datepicker"
+              ></el-date-picker>
             </el-form-item>
             <el-form-item
               label="经办人"
@@ -147,8 +204,16 @@
                 autocomplete="off"
               ></el-input>
             </el-form-item>
-            <el-form-item label="册数" :label-width="formLabelWidth" prop="num">
-              <el-input v-model="addBookForm.num" autocomplete="off"></el-input>
+            <el-form-item
+              label="版本"
+              :label-width="formLabelWidth"
+              prop="version"
+            >
+              <el-input
+                v-model.number="addBookForm.version"
+                autocomplete="off"
+                maxlength="3"
+              ></el-input>
             </el-form-item>
           </el-form>
           <template #footer>
@@ -196,6 +261,26 @@
               ></el-input>
             </el-form-item>
             <el-form-item
+              label="ISBN号码"
+              :label-width="formLabelWidth"
+              prop="ISBN"
+            >
+              <el-input
+                v-model.number="editBookForm.ISBN"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="价格(人民币)"
+              :label-width="formLabelWidth"
+              prop="price"
+            >
+              <el-input
+                v-model="editBookForm.price"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
               label="出版社"
               :label-width="formLabelWidth"
               prop="publish"
@@ -206,17 +291,32 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="价格(人民币)"
+              label="出版年月"
               :label-width="formLabelWidth"
-              prop="location"
+              prop="pub_date"
+            >
+              <el-date-picker
+                v-model="editBookForm.pub_date"
+                type="date"
+                placeholder="选择日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+                class="custom-datepicker"
+              ></el-date-picker>
+            </el-form-item>
+            <el-form-item
+              label="经办人"
+              :label-width="formLabelWidth"
+              prop="manager_id"
             >
               <el-input
-                v-model="editBookForm.location"
+                v-model="editBookForm.manager_id"
                 autocomplete="off"
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="数量(本)"
+              label="版本"
               :label-width="formLabelWidth"
               prop="version"
             >
@@ -224,16 +324,6 @@
                 v-model.number="editBookForm.version"
                 autocomplete="off"
                 maxlength="3"
-              ></el-input>
-            </el-form-item>
-            <el-form-item
-              label="ISBN号码"
-              :label-width="formLabelWidth"
-              prop="ISBN"
-            >
-              <el-input
-                v-model.number="editBookForm.ISBN"
-                autocomplete="off"
               ></el-input>
             </el-form-item>
           </el-form>
@@ -256,7 +346,10 @@
           title="删除图书"
           width="500px"
         >
-          <span>确认删除 {{ deleteName }}</span>
+          <span>确认删除 {{ deleteList.deleteName }}</span>
+          <div>
+            <span>ISBN: {{ deleteList.ISBN }}</span>
+          </div>
           <template #footer>
             <span class="dialog-footer">
               <el-button @click="deleteBookDialogVisible = false"
@@ -278,6 +371,16 @@ import { Plus, Search } from "@element-plus/icons-vue";
 import axios from "axios";
 import { ElMessageBox, ElMessage } from "element-plus";
 import router from "@/router";
+import { format } from "date-fns";
+// 返回日期格式
+const formatDate = (val: string) => {
+  const formattedDate = format(new Date(val), "yyyy-MM-dd");
+  return formattedDate;
+};
+// 定义价格格式化方法
+const formatPrice = (value: string) => {
+  return parseFloat(value).toFixed(2);
+};
 
 // 标签长度
 let formLabelWidth = 120;
@@ -349,30 +452,37 @@ const searchButton = () => {
 // 搜索图书
 const searchBook = () => {
   if (searchInput.value != "") {
-    let obj = {
-      ISBN: searchInput.value,
-    };
-    console.log("faf", obj);
-    axios.post("/api/manager/querybook/", obj).then((resp) => {
-      books.value = resp.data.books;
-      pageTotal.value = resp.data.totalElements;
-      const code = resp.data.code;
-      const message = resp.data.message;
-      // 查询失败
-      if (code == 400) {
-        ElMessage({
-          message: message,
-          type: "error",
-        });
-      }
-      // 查询成功
-      if (code == 200) {
-        ElMessage({
-          message: message,
-          type: "success",
-        });
-      }
-    });
+    axios
+      .get(
+        "/api/manager/showbooktable?pageNum=" +
+          // searchModel.value +
+          // "/" +
+          // searchInput.value +
+          // "/" +
+          pageNum.value +
+          "&pageSize=" +
+          pageSize.value
+      )
+      .then((resp) => {
+        books.value = resp.data.booktables;
+        pageTotal.value = resp.data.totalElements;
+        const code = resp.data.code;
+        const message = resp.data.message;
+        // 查询失败
+        if (code == 400) {
+          ElMessage({
+            message: message,
+            type: "error",
+          });
+        }
+        // 查询成功
+        if (code == 200) {
+          ElMessage({
+            message: message,
+            type: "success",
+          });
+        }
+      });
   }
 };
 
@@ -395,10 +505,14 @@ const checkISBN = (rule: any, value: any, callback: any) => {
 };
 // 图书表单规则
 const bookRules = reactive<FormRules>({
-  location: [{ required: true, message: "请输入存放位置", trigger: "blur" }],
+  pub_date: [{ required: true, message: "请输入出版日期", trigger: "blur" }],
+  name: [{ required: true, message: "请输入图书名称", trigger: "blur" }],
+  author: [{ required: true, message: "请输入作者名称", trigger: "blur" }],
+  publish: [{ required: true, message: "请输入出版社名称", trigger: "blur" }],
+  price: [{ required: true, message: "请输入价格(人民币)", trigger: "blur" }],
+  version: [{ required: true, message: "请输入数量(本)", trigger: "blur" }],
   ISBN: [{ required: true, message: "请输入ISBN", trigger: "blur" }],
   manager_id: [{ required: true, message: "请输入经办人", trigger: "blur" }],
-  num: [{ required: true, message: "请输入经办人", trigger: "blur" }],
 });
 
 // 添加图书对话框显示
@@ -413,10 +527,14 @@ const addFromButton = (formEl: FormInstance | undefined) => {
 // 添加图书表单
 const addBookFormRef = ref<FormInstance>();
 let addBookForm = reactive({
-  location: "",
+  name: "",
+  author: "",
+  publish: "",
+  price: "",
+  version: "",
   ISBN: "",
+  pub_date: "",
   manager_id: "",
-  num: "",
 });
 
 // 添加图书按钮
@@ -424,7 +542,7 @@ const addBookButton = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      axios.post("/api/manager/addbook/", addBookForm).then((resp) => {
+      axios.post("/api/manager/addbooktable/", addBookForm).then((resp) => {
         const code = resp.data.code;
         const message = resp.data.message;
 
@@ -440,6 +558,7 @@ const addBookButton = (formEl: FormInstance | undefined) => {
             confirmButtonText: "确认",
             callback: () => {
               addBookFormVisible.value = false;
+              searchBook();
             },
           });
         }
@@ -455,7 +574,7 @@ let editBookFormVisible = ref(false);
 const editFromButton = (formEl: FormInstance | undefined, row: any) => {
   editBookFormVisible.value = true;
   editBookForm = reactive(JSON.parse(JSON.stringify(row)));
-  editBookForm.ISBN = row.ISBN;
+  editBookForm.pub_date = formatDate(row.pub_date);
   if (!formEl) return;
   formEl.resetFields();
 };
@@ -463,13 +582,15 @@ const editFromButton = (formEl: FormInstance | undefined, row: any) => {
 // 编辑图书表单
 const editBookFormRef = ref<FormInstance>();
 let editBookForm = reactive({
-  groups: "",
   name: "",
   author: "",
   publish: "",
-  location: "",
+  price: "",
   version: "",
   ISBN: "",
+  pub_date: "",
+  manager_id: "",
+  num: 1,
 });
 
 // 编辑图书按钮
@@ -477,33 +598,27 @@ const editBookButton = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      axios
-        .post("http://localhost:8888/book/update", editBookForm)
-        .then((resp) => {
-          const code = resp.data.code;
-
-          // 编辑失败
-          if (code == 0) {
-            ElMessageBox.alert("编辑图书失败，请重试", "信息", {
-              confirmButtonText: "确认",
-            });
-          }
-          // 编辑成功
-          if (code == 1) {
-            ElMessageBox.alert("编辑成功", "信息", {
-              confirmButtonText: "确认",
-              callback: () => {
-                editBookFormVisible.value = false;
-              },
-            });
-          }
-          // ISBN号码存在
-          if (code == 2) {
-            ElMessageBox.alert("编辑失败，此ISBN号码已存在", "信息", {
-              confirmButtonText: "确认",
-            });
-          }
-        });
+      axios.post("/api/manager/updatebooktable/", editBookForm).then((resp) => {
+        console.log("caf", editBookForm);
+        const code = resp.data.code;
+        const message = resp.data.message;
+        // 编辑失败
+        if (code == 400) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+          });
+        }
+        // 编辑成功
+        if (code == 200) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+            callback: () => {
+              editBookFormVisible.value = false;
+              searchBook();
+            },
+          });
+        }
+      });
     } else {
       return false;
     }
@@ -511,52 +626,48 @@ const editBookButton = (formEl: FormInstance | undefined) => {
 };
 
 // 删除图书
-let deleteName = ref("");
-let deleteId = ref(0);
+let deleteList = reactive({
+  ISBN: "",
+  deleteName: "",
+});
 let deleteBookDialogVisible = ref(false);
 const deleteBookDialog = (row: any) => {
-  deleteId.value = row.id;
-  deleteName.value = row.name;
+  deleteList.deleteName = row.name;
+  deleteList.ISBN = row.ISBN;
   deleteBookDialogVisible.value = true;
 };
 
 // 删除图书按钮
 const deleteBook = () => {
-  if (deleteId.value) {
-    axios
-      .post("http://localhost:8888/book/delete/" + deleteId.value)
-      .then((resp) => {
-        const code = resp.data.code;
+  if (deleteList.deleteName) {
+    axios.post("/api/manager/deletebooktable/", deleteList).then((resp) => {
+      const code = resp.data.code;
+      const message = resp.data.message;
 
-        // 删除失败
-        if (code == 0) {
-          ElMessageBox.alert("删除图书失败，请重试", "信息", {
-            confirmButtonText: "确认",
-          });
-        }
-        // 删除成功
-        if (code == 1) {
-          ElMessageBox.alert("删除成功", "信息", {
-            confirmButtonText: "确认",
-            callback: () => {
-              deleteBookDialogVisible.value = false;
-            },
-          });
-        }
-        // Id 不存在
-        if (code == 2) {
-          ElMessageBox.alert("删除失败，此 Id 不存在", "信息", {
-            confirmButtonText: "确认",
-          });
-        }
-      });
+      // 删除成功
+      if (code == 200) {
+        ElMessageBox.alert(message, {
+          confirmButtonText: "确认",
+          callback: () => {
+            deleteBookDialogVisible.value = false;
+            searchBook();
+          },
+        });
+      }
+      // Id 不存在// 删除失败
+      if (code == 400) {
+        ElMessageBox.alert(message, {
+          confirmButtonText: "确认",
+        });
+      }
+    });
   }
 };
 
 // 初始化
 const init = () => {
-  // 获取图书
-  //searchBook();
+  // 获取图书种类
+  searchBook();
 };
 init();
 </script>

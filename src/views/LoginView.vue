@@ -103,9 +103,19 @@
               :label-width="formLabelWidth"
               prop="email"
             >
+              <el-input
+                v-model="addUserForm.email"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="验证码"
+              :label-width="formLabelWidth"
+              prop="code"
+            >
               <div class="flex-container">
                 <el-input
-                  v-model="addUserForm.email"
+                  v-model="addUserForm.code"
                   autocomplete="off"
                   class="input-with-spacing"
                 >
@@ -118,16 +128,6 @@
                   获取验证码
                 </el-button>
               </div>
-            </el-form-item>
-            <el-form-item
-              label="验证码"
-              :label-width="formLabelWidth"
-              prop="code"
-            >
-              <el-input
-                v-model="addUserForm.code"
-                autocomplete="off"
-              ></el-input>
             </el-form-item>
             <el-form-item
               label="密码"
@@ -155,45 +155,6 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <!-- <el-form-item
-              label="借书卡号"
-              :label-width="formLabelWidth"
-              prop="code"
-            >
-              <el-input
-                v-model.number="addUserForm.code"
-                autocomplete="off"
-              ></el-input>
-            </el-form-item>
-            <el-form-item
-              label="手机号"
-              :label-width="formLabelWidth"
-              prop="phone"
-            >
-              <el-input
-                v-model.number="addUserForm.phone"
-                autocomplete="off"
-                maxlength="11"
-              ></el-input>
-            </el-form-item>
-            <el-form-item
-              label="身份"
-              :label-width="formLabelWidth"
-              prop="identity"
-            >
-              <el-select
-                v-model="addUserForm.identity"
-                placeholder="请选择身份"
-              >
-                <el-option
-                  v-for="item in IdentityType"
-                  :key="item.typeId"
-                  :label="item.typeName"
-                  :value="item.typeName"
-                >
-                </el-option>
-              </el-select>
-            </el-form-item> -->
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -258,7 +219,6 @@ const addFromButton = (formEl: FormInstance | undefined) => {
 // 用户表单判断
 const userRules = reactive<FormRules>({
   email: [{ required: true, message: "请输入用户名称", trigger: "blur" }],
-  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 });
 
 // 判断用户登录状态
@@ -291,7 +251,7 @@ const login = (formEl: FormInstance | undefined) => {
     if (valid && !loginState.value) {
       loginState.value = true;
       // 发送客户端请求
-      axios.post("/api/reader/login", loginForm).then((resp) => {
+      axios.post("/api/manager/login", loginForm).then((resp) => {
         const code = resp.data.code;
         // 登录失败
         if (code == 0) {
@@ -335,7 +295,7 @@ const addEmailButton = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      axios.post("/api/reader/captcha/", addUserForm).then((resp) => {
+      axios.post("/api/manager/captcha/", addUserForm).then((resp) => {
         console.log(resp);
         const code = resp.data.code;
         const message = resp.data.message;
@@ -362,7 +322,7 @@ const addUserButton = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      axios.post("/api/reader/register/", addUserForm).then((resp) => {
+      axios.post("/api/manager/register/", addUserForm).then((resp) => {
         const code = resp.data.code;
         const message = resp.data.message;
         // 添加失败

@@ -12,7 +12,6 @@
                 class="search-book-input"
                 placeholder="请输入要搜索的ISBN号码"
                 v-model="searchBookInput"
-                maxlength="13"
               ></el-input
               ><el-button
                 class="search-book-button"
@@ -38,16 +37,8 @@
                 <el-form v-model="userInfo" ref="userInfoRef">
                   <span class="title">用户信息</span>
                   <el-input
-                    placeholder="借阅人名字"
-                    v-model="userInfo.name"
-                  ></el-input>
-                  <el-input
                     placeholder="借阅人卡号"
-                    v-model="userInfo.idCard"
-                  ></el-input>
-                  <el-input
-                    placeholder="借阅人手机号"
-                    v-model="userInfo.phone"
+                    v-model="userInfo.reader_id"
                   ></el-input>
                   <el-button type="primary" @click="borrowBook"
                     >借阅图书</el-button
@@ -92,53 +83,53 @@ let book = ref([
 // 用户信息
 const userInfoRef = ref<FormInstance>();
 const userInfo = reactive({
-  name: "",
-  idCard: "",
-  phone: "",
+  reader_id: "",
 });
 
 // 借阅图书按钮
 const borrowBook = () => {
-  axios
-    .post("http://localhost:8888/borrow/" + searchBookInput.value, userInfo)
-    .then((resp) => {
-      const statusCode = resp.data.statusCode;
+  let obj = {
+    ISBN: searchBookInput.value,
+    reader_id: userInfo.reader_id,
+  };
+  axios.post("/api/manager/borrowbook/", obj).then((resp) => {
+    const code = resp.data.code;
+    const message = resp.data.message;
 
-      // 借阅失败
-      if (statusCode == 0) {
-        ElMessageBox.alert("借阅失败，请重新借阅", "信息", {
-          confirmButtonText: "确认",
-        });
-      }
+    // 借阅失败
+    if (code == 400) {
+      ElMessageBox.alert(message, {
+        confirmButtonText: "确认",
+      });
+    }
+    // 借阅成功
+    if (code == 200) {
+      ElMessageBox.alert(message, {
+        confirmButtonText: "确认",
+      });
+    }
 
-      // 借阅成功
-      if (statusCode == 1) {
-        ElMessageBox.alert("借阅成功", "信息", {
-          confirmButtonText: "确认",
-        });
-      }
+    // 借阅失败，库存不足
+    if (code == 2) {
+      ElMessageBox.alert("借阅失败，库存不足", "信息", {
+        confirmButtonText: "确认",
+      });
+    }
 
-      // 借阅失败，库存不足
-      if (statusCode == 2) {
-        ElMessageBox.alert("借阅失败，库存不足", "信息", {
-          confirmButtonText: "确认",
-        });
-      }
+    // 借阅失败，卡号不存在
+    if (code == 3) {
+      ElMessageBox.alert("借阅失败，卡号不存在", "信息", {
+        confirmButtonText: "确认",
+      });
+    }
 
-      // 借阅失败，卡号不存在
-      if (statusCode == 3) {
-        ElMessageBox.alert("借阅失败，卡号不存在", "信息", {
-          confirmButtonText: "确认",
-        });
-      }
-
-      // 借阅失败，用户可借阅数量已达上限
-      if (statusCode == 4) {
-        ElMessageBox.alert("借阅失败，用户可借阅数量已达上限", "信息", {
-          confirmButtonText: "确认",
-        });
-      }
-    });
+    // 借阅失败，用户可借阅数量已达上限
+    if (code == 4) {
+      ElMessageBox.alert("借阅失败，用户可借阅数量已达上限", "信息", {
+        confirmButtonText: "确认",
+      });
+    }
+  });
 };
 </script>
 

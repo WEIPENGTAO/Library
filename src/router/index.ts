@@ -5,6 +5,7 @@ import TestPageView from "@/views/TestPageView.vue";
 import LoginView from "@/views/LoginView.vue";
 import NavView from "@/views/NavView.vue";
 import HomeView from "@/views/HomeView.vue";
+import BookTableView from "@/views/BookTableView.vue";
 import BookView from "@/views/BookView.vue";
 import BorrowView from "@/views/BorrowView.vue";
 import ReturnView from "@/views/ReturnView.vue";
@@ -47,8 +48,14 @@ const routes: Array<RouteRecordRaw> = [
     meta: { show: true },
     children: [
       {
+        path: "/bookTable",
+        name: "图书书目管理",
+        meta: { show: true },
+        components: { bookTable: BookTableView },
+      },
+      {
         path: "/book",
-        name: "图书管理",
+        name: "图书信息管理",
         meta: { show: true },
         components: { book: BookView },
       },

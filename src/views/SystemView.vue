@@ -47,7 +47,42 @@
             :rules="updatePasswordRules"
             ref="updatePasswordFormRef"
           >
-            <el-form-item label="新密码" prop="password">
+            <el-form-item
+              label="邮箱"
+              :label-width="formLabelWidth"
+              prop="email"
+            >
+              <el-input
+                v-model="updatePasswordForm.email"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="验证码"
+              :label-width="formLabelWidth"
+              prop="code"
+            >
+              <div class="flex-container">
+                <el-input
+                  v-model="updatePasswordForm.code"
+                  autocomplete="off"
+                  class="input-with-spacing"
+                >
+                </el-input>
+                <el-button
+                  type="warning"
+                  @click="addEmailButton(updatePasswordFormRef)"
+                  class="button-with-spacing"
+                >
+                  获取验证码
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item
+              label="新密码"
+              :label-width="formLabelWidth"
+              prop="password"
+            >
               <el-input
                 v-model="updatePasswordForm.password"
                 type="password"
@@ -144,6 +179,8 @@ import { reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import axios from "axios";
 import { ElMessageBox } from "element-plus";
+// 标签长度
+let formLabelWidth = 120;
 
 // 修改密码对话框
 let updatePasswordDialogVisible = ref(false);
@@ -156,13 +193,43 @@ const updatePasswordDialog = (formEl: FormInstance | undefined) => {
 // 修改密码表单
 const updatePasswordFormRef = ref<FormInstance>();
 const updatePasswordForm = reactive({
+  email: "",
   password: "",
+  code: "",
 });
 
 // 修改密码表单规则
 const updatePasswordRules = reactive<FormRules>({
-  password: [{ required: true, message: "请输入新密码", trigger: "blur" }],
+  //password: [{ required: true, message: "请输入新密码", trigger: "blur" }],
+  email: [{ required: true, message: "请输入新密码", trigger: "blur" }],
 });
+// 邮箱验证按钮
+const addEmailButton = (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+  formEl.validate((valid) => {
+    if (valid) {
+      axios.post("/api/manager/captcha/", updatePasswordForm).then((resp) => {
+        console.log(resp);
+        const code = resp.data.code;
+        const message = resp.data.message;
+        // 添加失败
+        if (code == 400) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+          });
+        }
+        // 添加成功
+        if (code == 200) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+          });
+        }
+      });
+    } else {
+      return false;
+    }
+  });
+};
 
 // 修改密码
 const updatePassword = (formEl: FormInstance | undefined) => {
@@ -170,19 +237,20 @@ const updatePassword = (formEl: FormInstance | undefined) => {
   formEl.validate((valid) => {
     if (valid) {
       axios
-        .post("http://localhost:8888/user/update/admin", updatePasswordForm)
+        .post("/api/manager/updatepassword/", updatePasswordForm)
         .then((resp) => {
-          const statusCode = resp.data.statusCode;
+          const code = resp.data.code;
+          const message = resp.data.message;
 
           // 修改失败
-          if (statusCode == 0) {
-            ElMessageBox.alert("修改密码失败，请重试", "信息", {
+          if (code == 400) {
+            ElMessageBox.alert(message, {
               confirmButtonText: "确认",
             });
           }
           // 修改成功
-          if (statusCode == 1) {
-            ElMessageBox.alert("修改成功", "信息", {
+          if (code == 200) {
+            ElMessageBox.alert(message, {
               confirmButtonText: "确认",
               callback: () => {
                 updatePasswordDialogVisible.value = false;
@@ -223,16 +291,16 @@ const addBookType = (formEl: FormInstance | undefined) => {
       axios
         .post("http://localhost:8888/type/add", addBookTypeForm)
         .then((resp) => {
-          const statusCode = resp.data.statusCode;
+          const code = resp.data.code;
 
           // 添加失败
-          if (statusCode == 0) {
+          if (code == 0) {
             ElMessageBox.alert("添加图书种类失败，请重试", "信息", {
               confirmButtonText: "确认",
             });
           }
           // 添加成功
-          if (statusCode == 1) {
+          if (code == 1) {
             ElMessageBox.alert("添加图书种类成功", "信息", {
               confirmButtonText: "确认",
               callback: () => {
@@ -241,7 +309,7 @@ const addBookType = (formEl: FormInstance | undefined) => {
             });
           }
           // 图书种类已存在
-          if (statusCode == 2) {
+          if (code == 2) {
             ElMessageBox.alert("该种类名称已存在", "信息", {
               confirmButtonText: "确认",
             });
@@ -273,16 +341,16 @@ const deleteBookType = (formEl: FormInstance | undefined) => {
       axios
         .post("http://localhost:8888/type/delete", deleteBookTypeForm)
         .then((resp) => {
-          const statusCode = resp.data.statusCode;
+          const code = resp.data.code;
 
           // 删除失败
-          if (statusCode == 0) {
+          if (code == 0) {
             ElMessageBox.alert("删除图书种类失败，请重试", "信息", {
               confirmButtonText: "确认",
             });
           }
           // 删除成功
-          if (statusCode == 1) {
+          if (code == 1) {
             ElMessageBox.alert("删除图书种类成功", "信息", {
               confirmButtonText: "确认",
               callback: () => {
@@ -291,7 +359,7 @@ const deleteBookType = (formEl: FormInstance | undefined) => {
             });
           }
           // 图书种类不存在
-          if (statusCode == 2) {
+          if (code == 2) {
             ElMessageBox.alert("该种类名称不存在", "信息", {
               confirmButtonText: "确认",
             });
