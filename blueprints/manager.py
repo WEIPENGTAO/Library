@@ -14,7 +14,7 @@ from models.captcha import Captcha
 from models.lend import Lend
 from models.manager import Manager
 from models.reserve import Reserve
-
+from models.reader import Reader
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
 
@@ -440,6 +440,7 @@ def querybook():
     version = data.get('version')
     publish = data.get('publish')
     ISBN = data.get('ISBN')
+    book_id=data.get('book_id')
 
     # 构建查询条件
     conditions = []
@@ -464,9 +465,12 @@ def querybook():
     # 获取 ISBN 属性列表
     booktable_ISBN_list = [booktable.ISBN for booktable in booktables]
 
-    books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
-                                                                                             per_page=per_page,
-                                                                                              error_out=False)
+    if not book_id:
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page, error_out=False)
+    if  book_id:
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list) and Book.book_id==book_id ).order_by(Book.ISBN).paginate(page=page, error_out=False)
+
+
     result_list = [
         {
             'name': booktable.name,
@@ -512,7 +516,7 @@ def addbook():
 
     if not all([ISBN, location, manager_id])  and num>=0:
         return jsonify({'code': 400, 'message': '参数不完整'})
-    # status = '不外借'
+
     if location == '图书流通室':
         status = '未借出'
     elif location=="图书借阅室":
