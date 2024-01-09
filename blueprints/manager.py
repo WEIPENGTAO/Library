@@ -1,10 +1,11 @@
 import random
 import string
 import time
+from datetime import datetime
 
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
-from sqlalchemy import and_
+from sqlalchemy import and_, desc, asc, func
 
 from exts import db, mail, scheduler
 from models.book import Book
@@ -278,6 +279,142 @@ def checkbooktable():
     ]
     return jsonify({'code':200,'message':result_list})
 
+# 分页展示管理员查询读者的借阅信息
+@manager.route('/checkLend/', methods=['POST'])
+def checkLend():
+    data = request.get_json()
+    page = int(data.get('page', 1))
+    per_page = int(data.get('per_page', 25))
+    issurper=int(data.get('issuper',0))#超时未还，1,可选参数
+    isno=int(data.get('isno',0))#未还，1,可选参数
+    isnormal=int(data.get('isnormal',0))#"已还，1,可选参数
+    reader_id = data.get('reader_id')  # 从前端获取，可选参数
+
+    if(issurper + isno + isnormal>1):
+         return jsonify({'code':400,'message':'借阅记录筛选条件冲突！'})
+
+    conditions=[]
+    if issurper:
+        conditions.append(Lend.status == "超期未还")
+    elif isno:
+        conditions.append(Lend.status == "未还")
+    elif isnormal:
+        conditions.append(Lend.status == "已还")
+    if reader_id :
+        conditions.append(Lend.reader_id==reader_id)
+
+    if not conditions:
+        lend_info = Lend.query.order_by(asc(func.abs(datetime.now() - Lend.due_date)))
+    else:
+        lend_info = Lend.query.filter(and_(*conditions)).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
+
+
+    lend_info = lend_info.paginate(page=page, per_page=per_page, error_out=False)
+
+    lend_info_serializable = []
+    for lend in lend_info:
+        book = Book.query.filter_by(id=lend.book_id).first()
+
+        book_table_info = BookTable.query.filter_by(ISBN=book.ISBN).first()
+
+        lend_info_serializable.append({
+            'book_name': book_table_info.name,
+            'reader_id':lend.reader_id,
+            'ISBN': book_table_info.ISBN,
+            'book_id': book.book_id,
+            'version': book_table_info.version,
+            'author': book_table_info.author,
+            'publisher': book_table_info.publish,
+            'return_date': lend.lend_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'due_date': lend.due_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'status': lend.status
+        })
+
+    return jsonify({
+        'code': 200,
+        'message': '查询成功',
+        'total_count': lend_info.total,
+        'booktables': lend_info_serializable,
+        'page': lend_info.page,
+        'per_page': lend_info.per_page,
+    })
+
+
+# 分页展示管理员查询读者的预约记录
+@manager.route('/checkreserve/', methods=['POST'])
+def checkreserve():
+    data = request.get_json()
+    page = int(data.get('page', 1))
+    per_page = int(data.get('per_page', 25))
+
+    reader_id = data.get('reader_id')  # 从前端获取，可选参数
+
+    if reader_id:
+        reserve_info = Reserve.query.filter_by(reader_id=reader_id).order_by(desc(Reserve.reserve_date))
+    else:
+        reserve_info = Reserve.query.order_by(desc(Reserve.reserve_date))
+
+    reserve_info = reserve_info.paginate(page=page, per_page=per_page, error_out=False)
+
+    reserve_info_serializable = []
+    for reserve in reserve_info:
+        book_table_info = BookTable.query.filter_by(ISBN=reserve.booktable_ISBN).first()
+
+        reserve_info_serializable.append({
+            'book_name': book_table_info.name,
+            'ISBN': book_table_info.ISBN,
+            'book_id': reserve.book_id,
+            "reader_id":reserve.reader_id,
+            'version': book_table_info.version,
+            'author': book_table_info.author,
+            'publisher': book_table_info.publish,
+            'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'book_id': reserve.book_id
+        })
+
+    return jsonify({
+        'code': 200,
+        'message': '查询成功',
+        'total_count': reserve_info.total,
+        'booktables': reserve_info_serializable,
+        'page': reserve_info.page,
+        'per_page': reserve_info.per_page
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -340,6 +477,7 @@ def querybook():
             'num': booktable.num,
             'book_id': book.book_id,
             'location': book.location,
+            "manager_by":book.manager_id,
             'status': book.status if book else None
         }
         for booktable in booktables
@@ -361,20 +499,26 @@ def querybook():
 
 
 
+
+
 # 入库管理
 @manager.route('/addbook/', methods=['POST'])
 def addbook():
     data = request.json
     ISBN = data.get('ISBN')
     location = data.get('location')
-    manager_id = data.get('manager_id')
+    manager_id = data.get('manager_id')#从前端获取
     num = int(data.get('num',0))
 
     if not all([ISBN, location, manager_id])  and num>=0:
         return jsonify({'code': 400, 'message': '参数不完整'})
-    status = '不外借'
+    # status = '不外借'
     if location == '图书流通室':
         status = '未借出'
+    elif location=="图书借阅室":
+        status="不外借"
+    else:
+        return jsonify({'code': 400, 'message': '图书位置信息不合理。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     for i in range(num):                                                         #逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
         book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,book_id="C"+ISBN[16:19]+"."+str(booktable.num+i))
@@ -486,23 +630,33 @@ def borrowbook():
     ISBN = data.get('ISBN')
     reader_id = data.get('reader_id')
     book_id = data.get('book_id')
-    reserve_time=data.get('reserve_time')
-    if not ((reader_id and book_id) or (ISBN and book_id)):
+    lend_time=data.get('lend_time')
+    if not ((reader_id and book_id) or (ISBN and reader_id)):
         return jsonify({'code': 400, 'message': '请提供ISBN、读者ID或者图书ID、读者ID'})
-    book = None
+    reader = Reader.query.filter_by(id=reader_id).first()
+    if not reader:
+         return jsonify({'code':400,'message':"读者编号不存在！请注册或核实记录！"})
+    if reader.borrow_num >= 10:
+        return jsonify({'code':400,'message':"读者"+reader.id+"借阅的读书数量已达上限10本。请先归还图书！"})
+    if reader.fine>0:
+        return jsonify({'code':400,'message':"读者"+reader.id+"尚欠借书违约费用"+reader.fine+"，请缴纳罚款！"})
+
     if book_id:
-        book = Book.query.filter(Book.id == book_id, Book.status == '未借出').first()
-    if not book and ISBN:
+        book = Book.query.filter(Book.id == book_id).first()
+    if  ISBN:
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
-    if not reserve_time:
-        return jsonify({'code': 400, 'message':"未提供预约天数。"})
-    if reserve_time>60:
-        return jsonify({'code':400,'message':"超过最大预约天数60天。"})
+    if not lend_time:
+        return jsonify({'code': 400, 'message':"未提供借书天数。"})
+    if lend_time>60:
+        return jsonify({'code':400,'message':"超过最大借书天数60天。"})
+
     book.status = '已借出'
     lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * reserve_time)))
+                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * lend_time)))
+
+    reader.borrow_num+=1
     db.session.add(lend)
     db.session.commit()
     return jsonify({'code': 200, 'message': '借阅成功'})
@@ -517,21 +671,27 @@ def returnbook():
     if not all([book_id, reader_id]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     book = Book.query.filter(Book.id == book_id, Book.status == '已借出').first()
+    reader=Reader.query.filter_by(id==reader_id).first()
+    lend = Lend.query.filter_by(book_id=book_id, reader_id=reader_id).first()
     if not book:
-        return jsonify({'code': 400, 'message': '该图书不存在或未借出'})
+        return jsonify({'code': 400, 'message': '该图书不存在或未借出!请核对图书编号！'})
     return_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     fine = 0
-    if return_date > book.due_date:
+    if return_date >lend.due_date:
         fine = (time.time() - time.mktime(time.strptime(book.due_date, '%Y-%m-%d %H:%M:%S'))) / 60 / 60 / 24 * 0.1
+        if fine>book.booktable.price:
+            fine = book.booktable.price
+        reader.fine += fine
+
     book.status = '未借出'
-    reader = book.reader
-    reader.fine += fine
-    ISBN = book.ISBN
-    reserve = Reserve.query.filter(Reserve.ISBN == ISBN).first()
+    lend.return_date = return_date
+    lend.status="已还"
+    reserve = Reserve.query.filter(Reserve.ISBN == book.ISBN).order_by(Reserve.id.asc()).first()
     if reserve:
-        reader = reserve.reader
+        reader1 =Reader.query.filter_by(reader_id=reserve.reader_id).first()
+        booktable=BookTable.query.filter_by(ISBN=book.ISBN).first()
         message = Message(subject='图书管理系统预约通知', recipients=[reader.email],
-                          body='您预约的图书《' + book.booktable.name + '》已归还，请及时借阅!')
+                          body='您预约的图书《' +  booktable.name + '》'+'第'+booktable.version+'版'+booktable.publish+'版。现已存在可借阅图书，请及时借阅!')
         mail.send(message)
     db.session.commit()
     return jsonify({'code': 200, 'message': '还书成功'})
