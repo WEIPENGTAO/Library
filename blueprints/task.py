@@ -12,6 +12,7 @@ from models.reserve import Reserve
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
 
+# 还书提醒
 @scheduler.task('cron', id='do_task_1', day='*', hour='0', minute='0', second='0')
 def task1():
     lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
@@ -24,6 +25,7 @@ def task1():
         mail.send(message)
 
 
+# 预约到书提醒
 @scheduler.task('cron', id='do_task_2', day='*', hour='0', minute='0', second='0')
 def task2():
     reserves = Reserve.query.filter().all()
@@ -35,6 +37,7 @@ def task2():
         mail.send(message)
 
 
+# 删除过期预约
 @scheduler.task('cron', id='do_task_3', day='*', hour='0', minute='0', second='0')
 def task3():
     reserves = Reserve.query.filter(
@@ -43,6 +46,7 @@ def task3():
         reserve.delete()
 
 
+# 更新图书数量
 @scheduler.task('cron', id='do_task_4', day='*', hour='0', minute='0', second='0')
 def task4():
     booktables = BookTable.query.all()

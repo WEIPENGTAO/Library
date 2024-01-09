@@ -1,9 +1,12 @@
+import time
 from datetime import datetime
 
 from flask import request, jsonify
+from flask_mail import Message
 from sqlalchemy import and_, asc, func
 
 from blueprints.manager import manager
+from exts import mail
 from models.book import Book
 from models.booktable import BookTable
 from models.lend import Lend
@@ -62,3 +65,17 @@ def checkLend():
         'page': lend_info.page,
         'per_page': lend_info.per_page,
     })
+
+
+# 还书提醒
+@manager.route('/returnnotice/', methods=['POST'])
+def returnnotice():
+    lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                              Lend.status == '未归还').all()
+    for lend in lends:
+        reader = lend.reader
+        book = lend.book
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
+        mail.send(message)
+    return jsonify({'code': 200, 'message': '提醒成功'})
