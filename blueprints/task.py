@@ -1,4 +1,5 @@
 import time
+from datetime import timedelta
 
 from flask import Blueprint
 from flask_mail import Message
@@ -58,3 +59,16 @@ def task4():
         booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
         booktable.num = Book.query.filter(Book.ISBN == ISBN).count()
     db.commit()
+
+
+# 提前5天提醒读者还书
+@scheduler.task('cron', id='do_task_5', day='*', hour='0', minute='0', second='0')
+def task5():
+    lends = Lend.query.filter(Lend.due_date - timedelta(days=5) < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                              Lend.status == '未归还').all()
+    for lend in lends:
+        reader = lend.reader
+        book = lend.book
+        message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                          body='您借阅的图书《' + book.booktable.name + '》还有5天到期，请及时归还')
+        mail.send(message)
