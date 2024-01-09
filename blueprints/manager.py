@@ -182,7 +182,7 @@ def deletebooktable():
     if not booktable:
         return jsonify({'code': 400, 'message': '该图书不存在'})
     elif booktable.num > 0:
-        return jsonify({'code': 400, 'message': '图书表单中尚且存在相关的图书，不允许直接删除书目。'})
+        return jsonify({'code': 400, 'message': '图书表中尚且存在相关的图书，不允许直接删除书目。'})
     db.session.delete(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功'})
@@ -192,7 +192,7 @@ def deletebooktable():
 @manager.route('/updatebooktable/', methods=['POST'])
 def updatebooktable():
     data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
-    ISBN = data.get('ISBN')
+    ISBN = data.get('ISBN')#ISBN是必须的
     name = data.get('name')
     author = data.get('author')
     price = data.get('price')
@@ -201,9 +201,11 @@ def updatebooktable():
     manager_id = data.get('manager_id')
     num = data.get('num')
     version = data.get('version')
+    if not ISBN:
+        return jsonify({'code': 400, 'message': '没有ISBN，无法锁定图书表目信息。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     if not booktable:
-        return jsonify({'code': 400, 'message': '该图书表单不存在！'})
+        return jsonify({'code': 400, 'message': '该ISBN信息图书不存在！'})
     if ISBN:
         booktable.ISBN = ISBN
     elif name:
@@ -220,9 +222,10 @@ def updatebooktable():
         booktable.version = version
     elif num>=0:
         booktable.num = num
+    elif price:
+        booktable.price =price
     else:
         return jsonify({'code': 400, 'message': '无修改信息！'})
-
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
 
@@ -262,7 +265,6 @@ def checkbooktable():
     item=BookTable.query.filter_by(ISBN=ISBN).first()
     if not item :
         return jsonify({'code':400,'message':'不存在该条图书信息。'})
-    print(item)
     result_list = [
         {
             'name': item.name,
@@ -452,6 +454,10 @@ def updateBook():
 
 
 
+
+
+
+
 # 预约管理
 @manager.route('/reservebook/', methods=['POST'])
 def reservebook():
@@ -525,7 +531,7 @@ def returnbook():
     if reserve:
         reader = reserve.reader
         message = Message(subject='图书管理系统预约通知', recipients=[reader.email],
-                          body='您预约的图书《' + book.booktable.name + '》已归还，请及时借阅')
+                          body='您预约的图书《' + book.booktable.name + '》已归还，请及时借阅!')
         mail.send(message)
     db.session.commit()
     return jsonify({'code': 200, 'message': '还书成功'})
