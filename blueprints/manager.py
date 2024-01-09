@@ -261,6 +261,8 @@ def checkbooktable():
     item = BookTable.query.filter_by(ISBN=ISBN).first()
     if not item:
         return jsonify({'code': 400, 'message': '不存在该条图书信息。'})
+
+    books = Book.query.filter_by(ISBN=ISBN, status="未借出").all()
     result_list = {
         'name': item.name,
         'ISBN': item.ISBN,
@@ -268,9 +270,13 @@ def checkbooktable():
         'version': item.version,
         'publish': item.publish,
         'num': item.num,
-        'remaining': Book.query.filter_by(ISBN=ISBN, status="未借出").count()
+        'remaining': books.count()
     }
-    return jsonify({'code': 200, 'message': "查询成功！", "result_list": result_list})
+    remain_book_id=[]
+    for book in books:
+        remain_book_id.append(book.book_id)
+
+    return jsonify({'code': 200, 'message': "查询成功！", "result_list": result_list, "remain_book_id": remain_list})
 
 
 # 分页展示管理员查询读者的借阅信息
@@ -542,7 +548,7 @@ def borrowbook():
     ISBN = data.get('ISBN')
     reader_id = data.get('reader_id')
     book_id = data.get('book_id')
-    lend_time = data.get('lend_time')
+    due_date = data.get('due_date')
     if not ((reader_id and book_id) or (ISBN and reader_id)):
         return jsonify({'code': 400, 'message': '请提供ISBN、读者ID或者图书ID、读者ID'})
     reader = Reader.query.filter_by(id=reader_id).first()
@@ -559,14 +565,13 @@ def borrowbook():
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
-    if not lend_time:
-        return jsonify({'code': 400, 'message': "未提供借书天数。"})
-    if lend_time > 60:
+    if not due_date:
+        return jsonify({'code': 400, 'message': "未提供所借图书归还日期。"})
+    if datetime(due_date)-datetime.now() > 60:
         return jsonify({'code': 400, 'message': "超过最大借书天数60天。"})
 
     book.status = '已借出'
-    lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * lend_time)))
+    lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),due_date=due_date)
 
     reader.borrow_num += 1
     db.session.add(lend)
