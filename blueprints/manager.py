@@ -142,12 +142,6 @@ def updatepassword():
     return jsonify({'code': 200, 'message': '修改成功'})
 
 
-
-
-
-
-
-
 # 添加图书表
 @manager.route('/addbooktable/', methods=['POST'])
 def addbooktable():
@@ -212,13 +206,13 @@ def updatebooktable():
         booktable.author = author
     elif publish:
         booktable.publish = publish
-    elif pub_date :
-        booktable.pub_date =pub_date
+    elif pub_date:
+        booktable.pub_date = pub_date
     elif manager_id:
         booktable.manager_id = manager_id
     elif version:
         booktable.version = version
-    elif num>=0:
+    elif num >= 0:
         booktable.num = num
     else:
         return jsonify({'code': 400, 'message': '无修改信息！'})
@@ -248,7 +242,7 @@ def showbooktable():
                     'message': '查询成功',
                     'total_count': booktables.total,
                     'booktables': booktable_list,
-                    'page':  booktables.page,
+                    'page': booktables.page,
                     'per_page': booktables.per_page,
                     })
 
@@ -257,11 +251,11 @@ def showbooktable():
 def checkbooktable():
     data = request.get_json()
     ISBN = data.get('ISBN')
-    if not ISBN :
+    if not ISBN:
         return jsonify({'code': 400, 'message': '参数不完整'})
-    item=BookTable.query.filter_by(ISBN=ISBN).first()
-    if not item :
-        return jsonify({'code':400,'message':'不存在该条图书信息。'})
+    item = BookTable.query.filter_by(ISBN=ISBN).first()
+    if not item:
+        return jsonify({'code': 400, 'message': '不存在该条图书信息。'})
     print(item)
     result_list = [
         {
@@ -270,22 +264,11 @@ def checkbooktable():
             'author': item.author,
             'version': item.version,
             'publish': item.publish,
-            'num':item.num,
-            'remaining': item.num- Book.query.filter_by(ISBN=ISBN,status="已借出").count()
+            'num': item.num,
+            'remaining': item.num - Book.query.filter_by(ISBN=ISBN, status="已借出").count()
         }
     ]
-    return jsonify({'code':200,'message':result_list})
-
-
-
-
-
-
-
-
-
-
-
+    return jsonify({'code': 200, 'message': result_list})
 
 
 # 根据ISBN查询图书信息,添加分页查询和模糊查询功能,可以兼容以前的版本
@@ -326,8 +309,8 @@ def querybook():
     booktable_ISBN_list = [booktable.ISBN for booktable in booktables]
 
     books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
-                                                                                             per_page=per_page,
-                                                                                              error_out=False)
+                                                                                               per_page=per_page,
+                                                                                               error_out=False)
     result_list = [
         {
             'name': booktable.name,
@@ -348,15 +331,13 @@ def querybook():
     response = {
         'code': 200,
         'message': '查询成功',
-        'books':result_list,
+        'books': result_list,
         'total_count': books.total,
         'page': books.page,
         'per_page': books.per_page
     }
 
     return jsonify(response)
-
-
 
 
 # 入库管理
@@ -366,21 +347,23 @@ def addbook():
     ISBN = data.get('ISBN')
     location = data.get('location')
     manager_id = data.get('manager_id')
-    num = int(data.get('num',0))
+    num = int(data.get('num', 0))
 
-    if not all([ISBN, location, manager_id])  and num>=0:
+    if not all([ISBN, location, manager_id]) and num >= 0:
         return jsonify({'code': 400, 'message': '参数不完整'})
     status = '不外借'
     if location == '图书流通室':
         status = '未借出'
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
-    for i in range(num):                                                         #逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
-        book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,book_id="C"+ISBN[16:19]+"."+str(booktable.num+i))
+    for i in range(num):  # 逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
+        book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,
+                    book_id="C" + ISBN[16:19] + "." + str(booktable.num + i))
         db.session.add(book)
 
     booktable.num += num
     db.session.commit()
     return jsonify({'code': 200, 'message': '入库成功'})
+
 
 @manager.route('/deletebook/', methods=['POST'])
 def deletebook():
@@ -388,13 +371,12 @@ def deletebook():
     book_id = data.get('book_id')
     if not all([book_id]):
         return jsonify({'code': 400, 'message': "输入空的图书编号"})
-    book=Book.query.filter_by(book_id=book_id).first()
+    book = Book.query.filter_by(book_id=book_id).first()
     if book is None:
-        return jsonify({'code':400,'message':"该图书不存在。"})
+        return jsonify({'code': 400, 'message': "该图书不存在。"})
     db.session.delete(book)
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功！'})
-
 
 
 @manager.route('/updatebook/', methods=['POST'])
@@ -403,53 +385,24 @@ def updateBook():
     book_id = data.get('book_id')
     ISBN = data.get('ISBN')
     location = data.get('location')
-    manager_id = data.get('manager_id')#这个需要从前端获得，只有管理员登录后才行，所以对此字段不考虑外检约束
-    if not book_id :
+    manager_id = data.get('manager_id')  # 这个需要从前端获得，只有管理员登录后才行，所以对此字段不考虑外检约束
+    if not book_id:
         return jsonify({'code': 400, 'message': '输入空白的图书编号信息！'})
     book = Book.query.filter_by(book_id=book_id).first()
     if book is None:
-        return jsonify({'code': 400,'message':"不存在该图书！"})
+        return jsonify({'code': 400, 'message': "不存在该图书！"})
     if ISBN:
         if not BookTable.query.filter_by(ISBN=ISBN).first():
-            return jsonify({'code':400,'message':"无法添加该信息，因为图书表单中不存在该信息。"})
+            return jsonify({'code': 400, 'message': "无法添加该信息，因为图书表单中不存在该信息。"})
         book.ISBN = ISBN
-    elif location in ["图书阅览室","图书流通室"]:
+    elif location in ["图书阅览室", "图书流通室"]:
         book.location = location
     elif manager_id:
         book.manager_id = manager_id
     else:
         return jsonify({'code': 400, 'message': "无修改信息！"})
     db.session.commit()
-    return  jsonify({'code': 200, 'message': '修改成功！'})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return jsonify({'code': 200, 'message': '修改成功！'})
 
 
 # 预约管理
@@ -468,11 +421,6 @@ def reservebook():
     return jsonify({'code': 200, 'message': '预约成功'})
 
 
-
-
-
-
-
 # 借书管理
 @manager.route('/borrowbook/', methods=['POST'])
 def borrowbook():
@@ -480,7 +428,7 @@ def borrowbook():
     ISBN = data.get('ISBN')
     reader_id = data.get('reader_id')
     book_id = data.get('book_id')
-    reserve_time=data.get('reserve_time')
+    reserve_time = data.get('reserve_time')
     if not ((reader_id and book_id) or (ISBN and book_id)):
         return jsonify({'code': 400, 'message': '请提供ISBN、读者ID或者图书ID、读者ID'})
     book = None
@@ -491,9 +439,9 @@ def borrowbook():
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
     if not reserve_time:
-        return jsonify({'code': 400, 'message':"未提供预约天数。"})
-    if reserve_time>60:
-        return jsonify({'code':400,'message':"超过最大预约天数60天。"})
+        return jsonify({'code': 400, 'message': "未提供预约天数。"})
+    if reserve_time > 60:
+        return jsonify({'code': 400, 'message': "超过最大预约天数60天。"})
     book.status = '已借出'
     lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                 due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * reserve_time)))
