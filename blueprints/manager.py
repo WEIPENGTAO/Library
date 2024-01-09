@@ -186,6 +186,7 @@ def deletebooktable():
 @manager.route('/updatebooktable/', methods=['POST'])
 def updatebooktable():
     data = request.json  # 使用 request.json 获取 POST 请求的 JSON 数据
+    old_ISBN = data.get('old_ISBN')
     ISBN = data.get('ISBN')
     name = data.get('name')
     author = data.get('author')
@@ -195,28 +196,27 @@ def updatebooktable():
     manager_id = data.get('manager_id')
     num = data.get('num')
     version = data.get('version')
-    booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
+    booktable = BookTable.query.filter(BookTable.ISBN == old_ISBN).first()
     if not booktable:
         return jsonify({'code': 400, 'message': '该图书表单不存在！'})
     if ISBN:
         booktable.ISBN = ISBN
-    elif name:
+    if name:
         booktable.name = name
-    elif author:
+    if author:
         booktable.author = author
-    elif publish:
+    if price:
+        booktable.price = price
+    if publish:
         booktable.publish = publish
-    elif pub_date:
+    if pub_date:
         booktable.pub_date = pub_date
-    elif manager_id:
+    if manager_id:
         booktable.manager_id = manager_id
-    elif version:
-        booktable.version = version
-    elif num >= 0:
+    if num:
         booktable.num = num
-    else:
-        return jsonify({'code': 400, 'message': '无修改信息！'})
-
+    if version:
+        booktable.version = version
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
 
