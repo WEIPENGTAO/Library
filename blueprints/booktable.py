@@ -2,6 +2,7 @@ from flask import request, jsonify
 
 from blueprints.manager import manager
 from exts import db
+from models.book import Book
 from models.booktable import BookTable
 
 
