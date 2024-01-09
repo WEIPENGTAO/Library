@@ -86,14 +86,15 @@ def signout():
 
     reader = Reader.query.filter(Reader.id == reader_id).first()
     if not reader:
-        return jsonify({'code': 400, 'message': "读者不存在。"})
+        return jsonify({'code': 400, 'message': '注销失败','reason':"读者不存在。请核对自己的读者ID"})
     # 预约记录中全部是有效的记录，读者注销直接级联删除，重点考虑罚金和借阅记录
     if reader.fine > 0:
-        return jsonify({'code': 400, 'message': '罚金尚未缴纳，请及时缴纳！其中罚金会随着时间逐渐增加，请做一名诚信读者！'})
-
+        return jsonify({'code': 400, 'message': '注销失败','reason':'罚金尚未缴纳，请及时缴纳！其中罚金会随着时间逐渐增加，请做一名诚信读者！'})
+    if reader.borrow_num >0:
+        return jsonify({'code': 400, 'message': '注销失败','reason':"你尚存在其余借阅书目。此时不可以注销账户，请及时归还图书。"})
     lend_list = Lend.query.filter(Lend.reader_id == reader_id).all()
-    book_count_map = {}
-
+    book_count_map = {}#未还读书数量
+    map = {}#未还读书书名
     for lend in lend_list:
         if lend.status == "未还" or lend.status == "超期未还":
             book_id = lend.book_id
@@ -104,14 +105,17 @@ def signout():
                     book_count_map[book_name] += 1
                 else:
                     book_count_map[book_name] = 1
+                    booktable=BookTable.query.filter_by(ISBN=book_name).first()
+                    map[book_name] =booktable.name
+
 
     if not book_count_map:
         db.session.delete(reader)
         return jsonify({'code': 200, 'message': '注销成功！'})
     else:
-        message = '你存在以下借阅的图书信息: ' + ';'.join([f'ISBN编号：{key} ,借阅数量：{value}本' for key, value in
+        reason = '你存在以下借阅的图书信息: ' + ';'.join([f'书名：{map[key]},ISBN编号：{key},借阅数量：{value}本' for key, value in
                                                            book_count_map.items()]) + ".以上图书尚未归还，请尽快归还！若不归还，会处以罚金。请做一名诚信读者！"
-        return jsonify({'code': 400, 'message': message})
+        return jsonify({'code': 400, 'message': '注销失败', 'reason': reason})
 
 
 # 读者查询自己的借阅信息
