@@ -177,7 +177,7 @@ def deletebooktable():
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     if not booktable:
         return jsonify({'code': 400, 'message': '该图书不存在'})
-    elif booktable.num > 0:
+    if booktable.num > 0:
         return jsonify({'code': 400, 'message': '图书表中尚且存在相关的图书，不允许直接删除书目。'})
     db.session.delete(booktable)
     db.session.commit()
@@ -234,8 +234,6 @@ def showbooktable():
     per_page = int(data.get('per_page', 20))  # 默认值为20
     booktables = BookTable.query.paginate(page=page, per_page=per_page, error_out=False)
     booktable_list = []
-    # 查询BookTable的总数
-    total_count = BookTable.query.count()
     for booktable in booktables.items:
         booktable_list.append(
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
@@ -251,8 +249,8 @@ def showbooktable():
                     })
 
 
-@manager.route('/checkbooktable/', methods=['POST'])
-def checkbooktable():
+@manager.route('/querybooktable/', methods=['POST'])
+def querybooktable():
     data = request.get_json()
     ISBN = data.get('ISBN')
     if not ISBN:
@@ -277,26 +275,21 @@ def checkbooktable():
 
 
 # 分页展示管理员查询读者的借阅信息
-@manager.route('/checkLend/', methods=['POST'])
+@manager.route('/querylend/', methods=['POST'])
 def checkLend():
     data = request.get_json()
     page = int(data.get('page', 1))
     per_page = int(data.get('per_page', 25))
-    issurper = int(data.get('issuper', 0))  # 超时未还，1,可选参数
-    isno = int(data.get('isno', 0))  # 未还，1,可选参数
-    isnormal = int(data.get('isnormal', 0))  # "已还，1,可选参数
+    status = data.get('status')  # 从前端获取，可选参数
     reader_id = data.get('reader_id')  # 从前端获取，可选参数
 
-    if (issurper + isno + isnormal > 1):
-        return jsonify({'code': 400, 'message': '借阅记录筛选条件冲突！'})
+    if status and status not in ["超期未还", "未还", "已还"]:
+        return jsonify({'code': 400, 'message': '状态错误'})
 
     conditions = []
-    if issurper:
-        conditions.append(Lend.status == "超期未还")
-    elif isno:
-        conditions.append(Lend.status == "未还")
-    elif isnormal:
-        conditions.append(Lend.status == "已还")
+    if status:
+        conditions.append(Lend.status == status)
+
     if reader_id:
         conditions.append(Lend.reader_id == reader_id)
 
