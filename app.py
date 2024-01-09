@@ -3,8 +3,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 
 import config
-from blueprints.manager import manager
-from blueprints.reader import reader
+from blueprints import *
 from exts import db, mail, scheduler
 
 app = Flask(__name__)
