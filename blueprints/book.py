@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 from flask import request, jsonify
 from flask_mail import Message
@@ -57,7 +58,7 @@ def querybook():
         books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
                                                                                                    error_out=False)
     if book_id:
-        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list) and Book.book_id == book_id).order_by(
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list),Book.book_id == book_id).order_by(
             Book.ISBN).paginate(page=page, error_out=False)
 
     result_list = [
@@ -166,7 +167,7 @@ def borrowbook():
     ISBN = data.get('ISBN')
     reader_id = data.get('reader_id')
     book_id = data.get('book_id')
-    lend_time = data.get('lend_time')
+    due_date = data.get('due_date')
     if not ((reader_id and book_id) or (ISBN and reader_id)):
         return jsonify({'code': 400, 'message': '请提供ISBN、读者ID或者图书ID、读者ID'})
     reader = Reader.query.filter_by(id=reader_id).first()
@@ -175,22 +176,25 @@ def borrowbook():
     if reader.borrow_num >= 10:
         return jsonify({'code': 400, 'message': "读者" + reader.id + "借阅的读书数量已达上限10本。请先归还图书！"})
     if reader.fine > 0:
-        return jsonify({'code': 400, 'message': "读者" + reader.id + "尚欠借书违约费用" + reader.fine + "，请缴纳罚款！"})
-    book = None
+        return jsonify({'code': 400, 'message': "读者" + reader.id + "尚欠借书违约费用" + reader.fine + "，请先缴纳罚款！"})
+
     if book_id:
         book = Book.query.filter(Book.id == book_id, Book.status == '未借出').first()
     if ISBN:
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
-    if not lend_time:
-        return jsonify({'code': 400, 'message': "未提供借书天数。"})
-    if lend_time > 60:
+    if not due_date:
+        return jsonify({'code': 400, 'message': "未提供所借图书应当归还日期。"})
+
+    due_date = datetime.strptime(due_date, '%Y-%m-%d')
+
+    if (due_date-datetime.now()).days > 60:
         return jsonify({'code': 400, 'message': "超过最大借书天数60天。"})
 
     book.status = '已借出'
     lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                due_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 60 * 60 * 24 * lend_time)))
+                due_date=due_date)
 
     reader.borrow_num += 1
     db.session.add(lend)

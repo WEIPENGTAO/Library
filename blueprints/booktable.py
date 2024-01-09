@@ -3,6 +3,7 @@ from flask import request, jsonify
 from blueprints.manager import manager
 from exts import db
 from models.booktable import BookTable
+from models.book import Book
 
 
 # 增加图书表
@@ -109,7 +110,7 @@ def showbooktable():
                     'per_page': booktables.per_page,
                     })
 
-
+#查询图书表单
 @manager.route('/querybooktable/', methods=['POST'])
 def querybooktable():
     data = request.get_json()
@@ -121,6 +122,13 @@ def querybooktable():
     if not item:
         return jsonify({'code': 400, 'message': '不存在该条图书信息。'})
 
+    books=Book.query.filter_by(ISBN=ISBN, status="未借出")
+    remain_list=[]
+    count=0
+    for book in books:
+        count+=1
+        remain_list.append(book.book_id)
+
     result_list = [
         {
             'name': item.name,
@@ -128,8 +136,9 @@ def querybooktable():
             'author': item.author,
             'version': item.version,
             'publish': item.publish,
-            'num': item.num,
-            'remaining': item.num - Book.query.filter_by(ISBN=ISBN, status="已借出").count()
+            'num': item.num
         }
     ]
-    return jsonify({'code': 200, 'message': result_list})
+    return jsonify({'code': 200, 'message': result_list, 'remain_book_id': remain_list,'remaining': count})
+
+
