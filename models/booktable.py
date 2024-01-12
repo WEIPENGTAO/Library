@@ -13,4 +13,5 @@ class BookTable(db.Model):
     manager_id = db.Column(db.Integer, db.ForeignKey('manager.id', onupdate='CASCADE', ondelete='CASCADE'))
     num = db.Column(db.Integer, nullable=False)
     version = db.Column(db.Integer, nullable=False, default=1)
+    url = db.Column(db.String(100), nullable=False)
 
