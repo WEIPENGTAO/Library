@@ -195,7 +195,7 @@ def borrowbook():
         return jsonify({'code': 400, 'message': "超过最大借书天数60天。"})
 
     book.status = '已借出'
-    lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+    lend = Lend(book_id=book.book_id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                 due_date=due_date)
     reader.borrow_num += 1
     db.session.add(lend)
