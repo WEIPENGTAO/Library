@@ -14,7 +14,7 @@ from models.lend import Lend
 
 # 分页展示管理员查询读者的借阅信息
 @manager.route('/querylend/', methods=['POST'])
-def checkLend():
+def querylend():
     data = request.get_json()
     page = int(data.get('page', 1))
     per_page = int(data.get('per_page', 25))
