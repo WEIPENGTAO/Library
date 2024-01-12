@@ -14,6 +14,7 @@ from models.reader import Reader
 from models.reserve import Reserve
 
 
+
 # 根据ISBN查询图书信息,添加分页查询和模糊查询功能,可以兼容以前的版本
 @manager.route('/querybook/', methods=['POST'])
 def querybook():
