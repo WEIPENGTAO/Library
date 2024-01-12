@@ -1,7 +1,7 @@
 from flask import request, jsonify
 
 from blueprints.manager import manager
-from exts import db
+from exts import db, upload_image_to_cloud, delete_image_from_cloud
 from models.book import Book
 from models.booktable import BookTable
 
@@ -18,9 +18,10 @@ def addbooktable():
     pub_date = data.get('pub_date')
     manager_id = data.get('manager_id')
     version = data.get('version')
-    url = data.get('url')
-    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, url]):
+    image_file = request.files.get('image')
+    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, image_file]):
         return jsonify({'code': 400, 'message': '参数不完整'})
+    url = upload_image_to_cloud(image_file, name)
     if BookTable.query.filter(BookTable.ISBN == ISBN).first():
         return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,
@@ -42,6 +43,7 @@ def deletebooktable():
         return jsonify({'code': 400, 'message': '该图书不存在'})
     if booktable.num > 0:
         return jsonify({'code': 400, 'message': '图书表中尚且存在相关的图书，不允许直接删除书目。'})
+    delete_image_from_cloud(booktable.url)
     db.session.delete(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功'})
@@ -61,7 +63,7 @@ def updatebooktable():
     manager_id = data.get('manager_id')
     num = data.get('num')
     version = data.get('version')
-    url = data.get('url')
+    image_file = request.files.get('image')
     if not old_ISBN:
         return jsonify({'code': 400, 'message': '没有ISBN，无法锁定图书表目信息。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
@@ -85,7 +87,9 @@ def updatebooktable():
         booktable.num = num
     if version:
         booktable.version = version
-    if url:
+    if image_file:
+        delete_image_from_cloud(booktable.url)
+        url = upload_image_to_cloud(image_file, name)
         booktable.url = url
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
@@ -141,7 +145,8 @@ def querybooktable():
             'author': item.author,
             'version': item.version,
             'publish': item.publish,
-            'num': item.num
+            'num': item.num,
+            'url': item.url,
         }
     return jsonify({'code': 200, 'message': "查询成功", "result_list": result_list, 'remain_book_id': remain_list,
                     'remaining': count})
