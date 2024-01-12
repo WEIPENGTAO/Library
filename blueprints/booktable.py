@@ -4,7 +4,6 @@ from blueprints.manager import manager
 from exts import db
 from models.book import Book
 from models.booktable import BookTable
-from models.book import Book
 
 
 # 增加图书表
@@ -19,12 +18,13 @@ def addbooktable():
     pub_date = data.get('pub_date')
     manager_id = data.get('manager_id')
     version = data.get('version')
-    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version]):
+    url = data.get('url')
+    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, url]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     if BookTable.query.filter(BookTable.ISBN == ISBN).first():
         return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,
-                          manager_id=manager_id, num=0, version=version)
+                          manager_id=manager_id, num=0, version=version, url=url)
     db.session.add(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '添加成功'})
@@ -61,6 +61,7 @@ def updatebooktable():
     manager_id = data.get('manager_id')
     num = data.get('num')
     version = data.get('version')
+    url = data.get('url')
     if not old_ISBN:
         return jsonify({'code': 400, 'message': '没有ISBN，无法锁定图书表目信息。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
@@ -84,6 +85,8 @@ def updatebooktable():
         booktable.num = num
     if version:
         booktable.version = version
+    if url:
+        booktable.url = url
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
 
@@ -101,7 +104,8 @@ def showbooktable():
         booktable_list.append(
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
              'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
-             'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version})
+             'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version,
+             'url': booktable.url})
 
     return jsonify({'code': 200,
                     'message': '查询成功',
@@ -111,7 +115,8 @@ def showbooktable():
                     'per_page': booktables.per_page,
                     })
 
-#查询图书表单
+
+# 查询图书表单
 @manager.route('/querybooktable/', methods=['POST'])
 def querybooktable():
     data = request.get_json()
@@ -123,11 +128,11 @@ def querybooktable():
     if not item:
         return jsonify({'code': 400, 'message': '不存在该条图书信息。'})
 
-    books=Book.query.filter_by(ISBN=ISBN, status="未借出")
-    remain_list=[]
-    count=0
+    books = Book.query.filter_by(ISBN=ISBN, status="未借出")
+    remain_list = []
+    count = 0
     for book in books:
-        count+=1
+        count += 1
         remain_list.append(book.book_id)
 
     result_list = [
@@ -140,6 +145,5 @@ def querybooktable():
             'num': item.num
         }
     ]
-    return jsonify({'code': 200, 'message': "查询成功","result_list":result_list, 'remain_book_id': remain_list,'remaining': count})
-
-
+    return jsonify({'code': 200, 'message': "查询成功", "result_list": result_list, 'remain_book_id': remain_list,
+                    'remaining': count})
