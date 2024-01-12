@@ -19,7 +19,10 @@ def addbooktable():
     manager_id = data.get('manager_id')
     version = data.get('version')
     label = data.get('label')
-    image_file = request.files.get('image')
+    image_file = request.files['image']
+    image_file.save('1.jpg')
+    print(1)
+    print(image_file.name)
     if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, label]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     url = None
