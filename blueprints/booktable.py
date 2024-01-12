@@ -128,15 +128,14 @@ def querybooktable():
     if not item:
         return jsonify({'code': 400, 'message': '不存在该条图书信息。'})
 
-    books = Book.query.filter_by(ISBN=ISBN, status="未借出")
+    books = Book.query.filter_by(ISBN=ISBN, location="图书流通室", status="未借出")
     remain_list = []
     count = 0
     for book in books:
         count += 1
         remain_list.append(book.book_id)
 
-    result_list = [
-        {
+    result_list = {
             'name': item.name,
             'ISBN': item.ISBN,
             'author': item.author,
@@ -144,6 +143,5 @@ def querybooktable():
             'publish': item.publish,
             'num': item.num
         }
-    ]
     return jsonify({'code': 200, 'message': "查询成功", "result_list": result_list, 'remain_book_id': remain_list,
                     'remaining': count})

@@ -58,7 +58,7 @@ def querybook():
         books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
                                                                                                    error_out=False)
     if book_id:
-        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list),Book.book_id == book_id).order_by(
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.book_id == book_id).order_by(
             Book.ISBN).paginate(page=page, error_out=False)
 
     result_list = [
@@ -176,10 +176,12 @@ def borrowbook():
     if reader.borrow_num >= 10:
         return jsonify({'code': 400, 'message': "读者" + reader.id + "借阅的读书数量已达上限10本。请先归还图书！"})
     if reader.fine > 0:
-        return jsonify({'code': 400, 'message': "读者" + reader.id + "尚欠借书违约费用" + reader.fine + "，请先缴纳罚款！"})
+        return jsonify(
+            {'code': 400, 'message': "读者" + reader.id + "尚欠借书违约费用" + reader.fine + "，请先缴纳罚款！"})
 
+    book = None
     if book_id:
-        book = Book.query.filter(Book.id == book_id, Book.status == '未借出').first()
+        book = Book.query.filter(Book.book_id == book_id, Book.status == '未借出').first()
     if ISBN:
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
@@ -189,13 +191,13 @@ def borrowbook():
 
     due_date = datetime.strptime(due_date, '%Y-%m-%d')
 
-    if (due_date-datetime.now()).days > 60:
+    if (due_date - datetime.now()).days > 60:
         return jsonify({'code': 400, 'message': "超过最大借书天数60天。"})
 
     book.status = '已借出'
     lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                 due_date=due_date)
-
+    print(book)
     reader.borrow_num += 1
     db.session.add(lend)
     db.session.commit()
