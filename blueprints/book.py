@@ -185,7 +185,7 @@ def borrowbook():
     if book is None and ISBN:
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
-        return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
+        return jsonify({'code': 400, 'message': '该图书不存在或数量不足。'})
     if not due_date:
         return jsonify({'code': 400, 'message': "未提供所借图书应当归还日期。"})
 

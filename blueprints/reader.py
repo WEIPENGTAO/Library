@@ -126,7 +126,10 @@ def checkLend():
     per_page = int(data.get('per_page', 25))
 
     reader_id = data.get('reader_id')  # 从前端获取
-    lend_info = Lend.query.filter_by(reader_id=reader_id).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
+    if reader_id:
+        lend_info = Lend.query.filter_by(reader_id=reader_id).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
+    else:
+        lend_info = Lend.query.order_by(asc(func.abs(datetime.now() - Lend.due_date)))
     lend_info = lend_info.paginate(page=page, per_page=per_page, error_out=False)
 
     lend_info_serializable = []
@@ -164,7 +167,10 @@ def checkreserve():
     per_page = int(data.get('per_page', 25))
 
     reader_id = data.get('reader_id')  # 从前端获取
-    reserve_info = Reserve.query.filter_by(reader_id=reader_id).order_by(desc(Reserve.reserve_date))
+    if reader_id:
+         reserve_info = Reserve.query.filter_by(reader_id=reader_id).order_by(desc(Reserve.reserve_date))
+    else:
+        reserve_info = Reserve.query.order_by(desc(Reserve.reserve_date))
 
     reserve_info = reserve_info.paginate(page=page, per_page=per_page, error_out=False)
 
