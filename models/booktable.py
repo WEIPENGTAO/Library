@@ -14,4 +14,5 @@ class BookTable(db.Model):
     num = db.Column(db.Integer, nullable=False, default=0)
     version = db.Column(db.Integer, nullable=False, default=1)
     url = db.Column(db.String(255), nullable=True)
+    label = db.Column(db.String(255), nullable=False, unique=True)
 

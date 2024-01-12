@@ -115,7 +115,7 @@ def addbook():
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     for i in range(num):  # 逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
         book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,
-                    book_id="C" + ISBN[16:19] + "." + str(booktable.num + i))
+                    book_id=str(booktable.label) + "." + str(booktable.num + i))
         db.session.add(book)
 
     booktable.num += num

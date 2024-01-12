@@ -20,16 +20,15 @@ def queryreserve():
 
     reader_id = data.get('reader_id')  # 从前端获取，可选参数
 
+    reserve_info = Reserve.query.order_by(desc(Reserve.reserve_date))
     if reader_id:
         reserve_info = Reserve.query.filter_by(reader_id=reader_id).order_by(desc(Reserve.reserve_date))
-    else:
-        reserve_info = Reserve.query.order_by(desc(Reserve.reserve_date))
 
     reserve_info = reserve_info.paginate(page=page, per_page=per_page, error_out=False)
 
     reserve_info_serializable = []
     for reserve in reserve_info:
-        book_table_info = BookTable.query.filter_by(ISBN=reserve.booktable_ISBN).first()
+        book_table_info = BookTable.query.filter_by(ISBN=reserve.ISBN).first()
 
         reserve_info_serializable.append({
             'book_name': book_table_info.name,
@@ -41,7 +40,6 @@ def queryreserve():
             'publisher': book_table_info.publish,
             'reserve_id': reserve.id,
             'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),
-            'book_id': reserve.book_id
         })
 
     return jsonify({
