@@ -78,7 +78,7 @@ def updatebooktable():
     num = data.get('num')
     version = data.get('version')
     label = data.get('label')
-    image_file = request.files.get('image')
+    url = data.get('url')
     if not old_ISBN:
         return jsonify({'code': 400, 'message': '没有ISBN，无法锁定图书表目信息。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
@@ -107,9 +107,8 @@ def updatebooktable():
         booktable.version = version
     if label:
         booktable.label = label
-    if image_file:
+    if url:
         delete_image_from_cloud(booktable.url)
-        url = upload_image_to_cloud(image_file, name)
         booktable.url = url
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
