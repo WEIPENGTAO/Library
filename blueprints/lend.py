@@ -46,6 +46,7 @@ def checkLend():
 
         lend_info_serializable.append({
             'book_name': book_table_info.name,
+            'lend_date' : book_table_info.lend_date,
             'reader_id': lend.reader_id,
             'ISBN': book_table_info.ISBN,
             'book_id': book.book_id,

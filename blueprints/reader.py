@@ -124,12 +124,14 @@ def checkLend():
     data = request.get_json()
     page = int(data.get('page', 1))
     per_page = int(data.get('per_page', 25))
-
+    status=data.get('status')
     reader_id = data.get('reader_id')  # 从前端获取
     if reader_id:
         lend_info = Lend.query.filter_by(reader_id=reader_id).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
     else:
         lend_info = Lend.query.order_by(asc(func.abs(datetime.now() - Lend.due_date)))
+    if status:
+        lend_info=lend_info.filter_by(status=status)
     lend_info = lend_info.paginate(page=page, per_page=per_page, error_out=False)
 
     lend_info_serializable = []
@@ -144,6 +146,8 @@ def checkLend():
             'book_id': lend.book_id,
             'version': book_table_info.version,
             'author': book_table_info.author,
+            'lend_date':lend.lend_date,
+            'reader_id': lend.reader_id,
             'publisher': book_table_info.publish,
             'return_date': lend.lend_date.strftime('%Y-%m-%d %H:%M:%S'),
             'due_date': lend.due_date.strftime('%Y-%m-%d %H:%M:%S'),
@@ -176,7 +180,6 @@ def checkreserve():
 
     reserve_info_serializable = []
     for reserve in reserve_info:
-        print(reserve)
         book_table_info = BookTable.query.filter_by(ISBN=reserve.booktable_ISBN).first()
 
         reserve_info_serializable.append({
@@ -184,6 +187,7 @@ def checkreserve():
             'ISBN': book_table_info.ISBN,
             'book_id': reserve.book_id,
             'version': book_table_info.version,
+            'reader_id':reserve.booktable_reader_id,
             'author': book_table_info.author,
             'publisher': book_table_info.publish,
             'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),
