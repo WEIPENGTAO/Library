@@ -99,7 +99,6 @@ def addbook():
     data = request.json
     ISBN = data.get('ISBN')
     location = data.get('location')
-
     manager_id = data.get('manager_id')
     num = int(data.get('num', 1))
 

@@ -28,6 +28,8 @@ def addbooktable():
     manager_id = data.get('manager_id')
     version = data.get('version')
     label = data.get('label')
+    url=data.get('url')
+
     if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, label]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     booktable1=BookTable.query.filter_by(label=label).first()
@@ -37,7 +39,7 @@ def addbooktable():
     if BookTable.query.filter(BookTable.ISBN == ISBN).first():
         return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,
-                          manager_id=manager_id, num=0, version=version, url=url, label=label)
+                          manager_id=manager_id, num=0, version=version,  url=url,label=label)
     db.session.add(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '添加成功'})
