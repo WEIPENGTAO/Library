@@ -22,6 +22,9 @@ def addbooktable():
     image_file = request.files.get('image')
     if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, label]):
         return jsonify({'code': 400, 'message': '参数不完整'})
+    booktable1=BookTable.query.filter_by(label=label).first()
+    if  booktable1:
+        return jsonify({'code':400,'message':'图书标签重复'})
     url = None
     if image_file:
         url = upload_image_to_cloud(image_file, name)
@@ -73,6 +76,9 @@ def updatebooktable():
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     if not booktable:
         return jsonify({'code': 400, 'message': '该ISBN信息图书不存在！'})
+    booktable1 = BookTable.query.filter_by(label=label).first()
+    if booktable1:
+        return jsonify({'code': 400, 'message': '图书标签重复'})
     if ISBN:
         booktable.ISBN = ISBN
     if name:
