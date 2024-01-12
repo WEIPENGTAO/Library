@@ -39,6 +39,7 @@ def queryreserve():
             'version': book_table_info.version,
             'author': book_table_info.author,
             'publisher': book_table_info.publish,
+            'reserve_id': reserve.id,
             'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),
             'book_id': reserve.book_id
         })
@@ -82,6 +83,20 @@ def reservenotice():
                           body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
         mail.send(message)
     return jsonify({'code': 200, 'message': '提醒成功'})
+
+
+# 删除一条预约记录
+@manager.route('/deletereserve/', methods=['POST'])
+def deletereserve():
+    data = request.json
+    id = data.get('id')
+    if not id:
+        return jsonify({'code': 400, 'message': '请提供记录id'})
+    reserve = Reserve.query.filter_by(id=id).first()
+    if not reserve:
+        return jsonify({'code': 400, 'message': '预约记录不存在'})
+    reserve.delete()
+    return jsonify({'code': 200, 'message': '删除成功'})
 
 
 # 删除过期预约
