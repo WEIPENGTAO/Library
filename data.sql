@@ -11,7 +11,7 @@
  Target Server Version : 80035
  File Encoding         : 65001
 
- Date: 06/01/2024 17:36:42
+ Date: 12/01/2024 11:39:15
 */
 
 SET NAMES utf8mb4;
@@ -43,18 +43,17 @@ CREATE TABLE `book`  (
   `status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '不外借 未借出 已预约 已借出',
   `book_id` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `book_id`(`book_id` ASC) USING BTREE,
   INDEX `ISBN`(`ISBN` ASC) USING BTREE,
   INDEX `manager_id`(`manager_id` ASC) USING BTREE,
-  UNIQUE INDEX `book_id`(`book_id` ASC) USING BTREE,
   CONSTRAINT `book_ibfk_1` FOREIGN KEY (`ISBN`) REFERENCES `booktable` (`ISBN`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `book_ibfk_2` FOREIGN KEY (`manager_id`) REFERENCES `manager` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `check_book_location` CHECK (`location` in (_utf8mb4'图书阅览室',_utf8mb4'图书流通室'))
-) ENGINE = InnoDB AUTO_INCREMENT = 1001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1104 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of book
 -- ----------------------------
-INSERT INTO `book` VALUES (1, 'ISBN7-302-02368-101', '图书流通室', 1, '已预约', 'C101.1');
 INSERT INTO `book` VALUES (3, 'ISBN7-302-02368-104', '图书流通室', 1, '不外借', 'C104.3');
 INSERT INTO `book` VALUES (4, 'ISBN7-302-02368-101', '图书阅览室', 1, '已预约', 'C101.4');
 INSERT INTO `book` VALUES (5, 'ISBN7-302-02368-103', '图书流通室', 1, '已预约', 'C103.5');
@@ -65,7 +64,7 @@ INSERT INTO `book` VALUES (9, 'ISBN7-302-02368-104', '图书流通室', 1, '已�
 INSERT INTO `book` VALUES (10, 'ISBN7-302-02368-103', '图书流通室', 1, '已预约', 'C103.10');
 INSERT INTO `book` VALUES (11, 'ISBN7-302-02368-107', '图书流通室', 1, '已预约', 'C107.11');
 INSERT INTO `book` VALUES (12, 'ISBN7-302-02368-105', '图书流通室', 1, '不外借', 'C105.12');
-INSERT INTO `book` VALUES (13, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.13');
+INSERT INTO `book` VALUES (13, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.13');
 INSERT INTO `book` VALUES (15, 'ISBN7-302-02368-102', '图书流通室', 1, '未借出', 'C102.15');
 INSERT INTO `book` VALUES (16, 'ISBN7-302-02368-105', '图书流通室', 1, '已预约', 'C105.16');
 INSERT INTO `book` VALUES (17, 'ISBN7-302-02368-107', '图书阅览室', 1, '已借出', 'C107.17');
@@ -89,7 +88,7 @@ INSERT INTO `book` VALUES (35, 'ISBN7-302-02368-103', '图书流通室', 1, '已
 INSERT INTO `book` VALUES (36, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.36');
 INSERT INTO `book` VALUES (37, 'ISBN7-302-02368-109', '图书流通室', 1, '已预约', 'C109.37');
 INSERT INTO `book` VALUES (38, 'ISBN7-302-02368-107', '图书流通室', 1, '不外借', 'C107.38');
-INSERT INTO `book` VALUES (39, 'ISBN7-302-02368-107', '图书流通室', 1, '未借出', 'C107.39');
+INSERT INTO `book` VALUES (39, 'ISBN7-302-02368-107', '图书流通室', 1, '已借出', 'C107.39');
 INSERT INTO `book` VALUES (40, 'ISBN7-302-02368-109', '图书流通室', 1, '未借出', 'C109.40');
 INSERT INTO `book` VALUES (41, 'ISBN7-302-02368-101', '图书流通室', 1, '不外借', 'C101.41');
 INSERT INTO `book` VALUES (42, 'ISBN7-302-02368-106', '图书流通室', 1, '已预约', 'C106.42');
@@ -110,7 +109,7 @@ INSERT INTO `book` VALUES (56, 'ISBN7-302-02368-102', '图书流通室', 1, '未
 INSERT INTO `book` VALUES (57, 'ISBN7-302-02368-102', '图书流通室', 1, '已借出', 'C102.57');
 INSERT INTO `book` VALUES (58, 'ISBN7-302-02368-108', '图书流通室', 1, '不外借', 'C108.58');
 INSERT INTO `book` VALUES (59, 'ISBN7-302-02368-106', '图书流通室', 1, '不外借', 'C106.59');
-INSERT INTO `book` VALUES (60, 'ISBN7-302-02368-107', '图书流通室', 1, '未借出', 'C107.60');
+INSERT INTO `book` VALUES (60, 'ISBN7-302-02368-107', '图书流通室', 1, '已借出', 'C107.60');
 INSERT INTO `book` VALUES (62, 'ISBN7-302-02368-102', '图书流通室', 1, '不外借', 'C102.62');
 INSERT INTO `book` VALUES (63, 'ISBN7-302-02368-106', '图书流通室', 1, '不外借', 'C106.63');
 INSERT INTO `book` VALUES (64, 'ISBN7-302-02368-105', '图书流通室', 1, '不外借', 'C105.64');
@@ -122,7 +121,7 @@ INSERT INTO `book` VALUES (69, 'ISBN7-302-02368-101', '图书阅览室', 1, '已
 INSERT INTO `book` VALUES (70, 'ISBN7-302-02368-109', '图书流通室', 1, '未借出', 'C109.70');
 INSERT INTO `book` VALUES (71, 'ISBN7-302-02368-101', '图书流通室', 1, '不外借', 'C101.71');
 INSERT INTO `book` VALUES (72, 'ISBN7-302-02368-104', '图书阅览室', 1, '已预约', 'C104.72');
-INSERT INTO `book` VALUES (73, 'ISBN7-302-02368-107', '图书阅览室', 1, '未借出', 'C107.73');
+INSERT INTO `book` VALUES (73, 'ISBN7-302-02368-107', '图书阅览室', 1, '已借出', 'C107.73');
 INSERT INTO `book` VALUES (74, 'ISBN7-302-02368-101', '图书流通室', 1, '已预约', 'C101.74');
 INSERT INTO `book` VALUES (75, 'ISBN7-302-02368-109', '图书流通室', 1, '未借出', 'C109.75');
 INSERT INTO `book` VALUES (76, 'ISBN7-302-02368-106', '图书流通室', 1, '不外借', 'C106.76');
@@ -142,7 +141,7 @@ INSERT INTO `book` VALUES (92, 'ISBN7-302-02368-106', '图书流通室', 1, '已
 INSERT INTO `book` VALUES (93, 'ISBN7-302-02368-101', '图书流通室', 1, '已预约', 'C101.93');
 INSERT INTO `book` VALUES (94, 'ISBN7-302-02368-102', '图书流通室', 1, '未借出', 'C102.94');
 INSERT INTO `book` VALUES (95, 'ISBN7-302-02368-102', '图书流通室', 1, '不外借', 'C102.95');
-INSERT INTO `book` VALUES (96, 'ISBN7-302-02368-107', '图书阅览室', 1, '未借出', 'C107.96');
+INSERT INTO `book` VALUES (96, 'ISBN7-302-02368-107', '图书阅览室', 1, '已借出', 'C107.96');
 INSERT INTO `book` VALUES (100, 'ISBN7-302-02368-107', '图书流通室', 1, '不外借', 'C107.100');
 INSERT INTO `book` VALUES (101, 'ISBN7-302-02368-106', '图书流通室', 1, '已借出', 'C106.101');
 INSERT INTO `book` VALUES (102, 'ISBN7-302-02368-102', '图书流通室', 1, '未借出', 'C102.102');
@@ -158,7 +157,7 @@ INSERT INTO `book` VALUES (113, 'ISBN7-302-02368-103', '图书阅览室', 1, '�
 INSERT INTO `book` VALUES (114, 'ISBN7-302-02368-109', '图书阅览室', 1, '已借出', 'C109.114');
 INSERT INTO `book` VALUES (115, 'ISBN7-302-02368-105', '图书流通室', 1, '不外借', 'C105.115');
 INSERT INTO `book` VALUES (116, 'ISBN7-302-02368-108', '图书流通室', 1, '已借出', 'C108.116');
-INSERT INTO `book` VALUES (117, 'ISBN7-302-02368-101', '图书阅览室', 1, '未借出', 'C101.117');
+INSERT INTO `book` VALUES (117, 'ISBN7-302-02368-101', '图书阅览室', 1, '已借出', 'C101.117');
 INSERT INTO `book` VALUES (118, 'ISBN7-302-02368-109', '图书流通室', 1, '未借出', 'C109.118');
 INSERT INTO `book` VALUES (119, 'ISBN7-302-02368-103', '图书流通室', 1, '已预约', 'C103.119');
 INSERT INTO `book` VALUES (121, 'ISBN7-302-02368-104', '图书阅览室', 1, '已借出', 'C104.121');
@@ -172,7 +171,7 @@ INSERT INTO `book` VALUES (129, 'ISBN7-302-02368-106', '图书流通室', 1, '�
 INSERT INTO `book` VALUES (130, 'ISBN7-302-02368-105', '图书流通室', 1, '不外借', 'C105.130');
 INSERT INTO `book` VALUES (131, 'ISBN7-302-02368-104', '图书流通室', 1, '已预约', 'C104.131');
 INSERT INTO `book` VALUES (132, 'ISBN7-302-02368-107', '图书流通室', 1, '不外借', 'C107.132');
-INSERT INTO `book` VALUES (133, 'ISBN7-302-02368-107', '图书流通室', 1, '未借出', 'C107.133');
+INSERT INTO `book` VALUES (133, 'ISBN7-302-02368-107', '图书流通室', 1, '已借出', 'C107.133');
 INSERT INTO `book` VALUES (134, 'ISBN7-302-02368-104', '图书流通室', 1, '未借出', 'C104.134');
 INSERT INTO `book` VALUES (135, 'ISBN7-302-02368-108', '图书流通室', 1, '已预约', 'C108.135');
 INSERT INTO `book` VALUES (136, 'ISBN7-302-02368-102', '图书流通室', 1, '已预约', 'C102.136');
@@ -196,7 +195,7 @@ INSERT INTO `book` VALUES (155, 'ISBN7-302-02368-104', '图书流通室', 1, '�
 INSERT INTO `book` VALUES (156, 'ISBN7-302-02368-105', '图书流通室', 1, '不外借', 'C105.156');
 INSERT INTO `book` VALUES (157, 'ISBN7-302-02368-109', '图书流通室', 1, '不外借', 'C109.157');
 INSERT INTO `book` VALUES (158, 'ISBN7-302-02368-107', '图书流通室', 1, '不外借', 'C107.158');
-INSERT INTO `book` VALUES (159, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.159');
+INSERT INTO `book` VALUES (159, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.159');
 INSERT INTO `book` VALUES (160, 'ISBN7-302-02368-102', '图书阅览室', 1, '已预约', 'C102.160');
 INSERT INTO `book` VALUES (161, 'ISBN7-302-02368-109', '图书阅览室', 1, '已预约', 'C109.161');
 INSERT INTO `book` VALUES (162, 'ISBN7-302-02368-106', '图书流通室', 1, '未借出', 'C106.162');
@@ -220,7 +219,7 @@ INSERT INTO `book` VALUES (182, 'ISBN7-302-02368-103', '图书流通室', 1, '�
 INSERT INTO `book` VALUES (183, 'ISBN7-302-02368-103', '图书流通室', 1, '已预约', 'C103.183');
 INSERT INTO `book` VALUES (184, 'ISBN7-302-02368-102', '图书流通室', 1, '已借出', 'C102.184');
 INSERT INTO `book` VALUES (185, 'ISBN7-302-02368-109', '图书流通室', 1, '已预约', 'C109.185');
-INSERT INTO `book` VALUES (186, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.186');
+INSERT INTO `book` VALUES (186, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.186');
 INSERT INTO `book` VALUES (187, 'ISBN7-302-02368-107', '图书阅览室', 1, '不外借', 'C107.187');
 INSERT INTO `book` VALUES (188, 'ISBN7-302-02368-102', '图书流通室', 1, '未借出', 'C102.188');
 INSERT INTO `book` VALUES (189, 'ISBN7-302-02368-103', '图书流通室', 1, '不外借', 'C103.189');
@@ -255,10 +254,10 @@ INSERT INTO `book` VALUES (218, 'ISBN7-302-02368-104', '图书阅览室', 1, '�
 INSERT INTO `book` VALUES (219, 'ISBN7-302-02368-105', '图书流通室', 1, '已借出', 'C105.219');
 INSERT INTO `book` VALUES (220, 'ISBN7-302-02368-108', '图书流通室', 1, '已预约', 'C108.220');
 INSERT INTO `book` VALUES (221, 'ISBN7-302-02368-101', '图书流通室', 1, '不外借', 'C101.221');
-INSERT INTO `book` VALUES (222, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.222');
+INSERT INTO `book` VALUES (222, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.222');
 INSERT INTO `book` VALUES (225, 'ISBN7-302-02368-108', '图书阅览室', 1, '未借出', 'C108.225');
 INSERT INTO `book` VALUES (226, 'ISBN7-302-02368-109', '图书流通室', 1, '已预约', 'C109.226');
-INSERT INTO `book` VALUES (227, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.227');
+INSERT INTO `book` VALUES (227, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.227');
 INSERT INTO `book` VALUES (228, 'ISBN7-302-02368-107', '图书流通室', 1, '已预约', 'C107.228');
 INSERT INTO `book` VALUES (229, 'ISBN7-302-02368-106', '图书流通室', 1, '已借出', 'C106.229');
 INSERT INTO `book` VALUES (230, 'ISBN7-302-02368-106', '图书阅览室', 1, '已借出', 'C106.230');
@@ -335,7 +334,7 @@ INSERT INTO `book` VALUES (308, 'ISBN7-302-02368-104', '图书流通室', 1, '�
 INSERT INTO `book` VALUES (309, 'ISBN7-302-02368-108', '图书流通室', 1, '不外借', 'C108.309');
 INSERT INTO `book` VALUES (310, 'ISBN7-302-02368-108', '图书流通室', 1, '已预约', 'C108.310');
 INSERT INTO `book` VALUES (311, 'ISBN7-302-02368-104', '图书流通室', 1, '已预约', 'C104.311');
-INSERT INTO `book` VALUES (312, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.312');
+INSERT INTO `book` VALUES (312, 'ISBN7-302-02368-101', '图书流通室', 1, '已借出', 'C101.312');
 INSERT INTO `book` VALUES (313, 'ISBN7-302-02368-104', '图书流通室', 1, '已借出', 'C104.313');
 INSERT INTO `book` VALUES (314, 'ISBN7-302-02368-101', '图书流通室', 1, '不外借', 'C101.314');
 INSERT INTO `book` VALUES (315, 'ISBN7-302-02368-101', '图书阅览室', 1, '未借出', 'C101.315');
@@ -974,10 +973,20 @@ INSERT INTO `book` VALUES (1004, 'ISBN7-302-02368-101', '图书流通室', 1, '�
 INSERT INTO `book` VALUES (1005, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.7');
 INSERT INTO `book` VALUES (1006, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.8');
 INSERT INTO `book` VALUES (1007, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.9');
-INSERT INTO `book` VALUES (1009, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.11');
-INSERT INTO `book` VALUES (1010, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.12');
 INSERT INTO `book` VALUES (1011, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.13');
 INSERT INTO `book` VALUES (1012, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C10.14');
+INSERT INTO `book` VALUES (1013, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.15');
+INSERT INTO `book` VALUES (1014, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.16');
+INSERT INTO `book` VALUES (1015, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.17');
+INSERT INTO `book` VALUES (1016, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.18');
+INSERT INTO `book` VALUES (1017, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.19');
+INSERT INTO `book` VALUES (1018, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.20');
+INSERT INTO `book` VALUES (1019, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.21');
+INSERT INTO `book` VALUES (1020, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.22');
+INSERT INTO `book` VALUES (1021, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.23');
+INSERT INTO `book` VALUES (1022, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.24');
+INSERT INTO `book` VALUES (1023, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.25');
+INSERT INTO `book` VALUES (1024, 'ISBN7-302-02368-101', '图书流通室', 1, '未借出', 'C101.26');
 
 -- ----------------------------
 -- Table structure for booktable
@@ -994,24 +1003,27 @@ CREATE TABLE `booktable`  (
   `manager_id` int NULL DEFAULT NULL,
   `num` int NOT NULL,
   `version` int NOT NULL,
+  `url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `ISBN`(`ISBN` ASC) USING BTREE,
   INDEX `manager_id`(`manager_id` ASC) USING BTREE,
   CONSTRAINT `booktable_ibfk_1` FOREIGN KEY (`manager_id`) REFERENCES `manager` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 21 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 20 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of booktable
 -- ----------------------------
-INSERT INTO `booktable` VALUES (12, '计算机网络', '谢希仁', 'ISBN7-302-02368-101', 51, '清华大学出版社', '2002-09-01', 1, 15, 3);
-INSERT INTO `booktable` VALUES (13, '操作系统', '汤小丹', 'ISBN7-302-02368-102', 52, '电子工业出版社', '2005-11-01', 1, 6, 4);
-INSERT INTO `booktable` VALUES (14, '软件工程', '李云峰', 'ISBN7-302-02368-103', 53, '机械工业出版社', '2008-03-01', 1, 7, 6);
-INSERT INTO `booktable` VALUES (15, '算法导论', 'Thomas H. Cormen', 'ISBN7-302-02368-104', 54, '机械工业出版社', '2010-06-01', 1, 4, 6);
-INSERT INTO `booktable` VALUES (16, '人工智能', '周志华', 'ISBN7-302-02368-105', 55, '清华大学出版社', '2013-08-01', 1, 8, 7);
-INSERT INTO `booktable` VALUES (17, '计算机图形学', 'Hearn', 'ISBN7-302-02368-106', 56, '机械工业出版社', '2016-02-01', 1, 5, 8);
-INSERT INTO `booktable` VALUES (18, '数据挖掘', 'Ian H. Witten', 'ISBN7-302-02368-107', 57, '机械工业出版社', '2018-04-01', 1, 6, 9);
-INSERT INTO `booktable` VALUES (19, '计算机组成原理', 'David A. Patterson', 'ISBN7-302-02368-108', 58, '电子工业出版社', '2021-07-01', 1, 7, 6);
-INSERT INTO `booktable` VALUES (20, '计算机体系结构', '王爱民', 'ISBN7-302-02368-109', 59, '高等教育出版社', '2017-09-01', 1, 5, 2);
+INSERT INTO `booktable` VALUES (12, '计算机网络', '谢希仁', 'ISBN7-302-02368-101', 51, '清华大学出版社', '2002-09-01', 1, 27, 6, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C.jpg');
+INSERT INTO `booktable` VALUES (13, '计算机操作系统慕课版', '汤小丹  王红玲 姜华  汤子瀛', 'ISBN7-302-02368-102', 52, '人民邮电出版社', '2005-11-01', 1, 6, 1, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F.jpg');
+INSERT INTO `booktable` VALUES (14, '软件工程', '齐治昌  谭庆平 宁洪等', 'ISBN7-302-02368-103', 53, '高等教育出版社', '2008-03-01', 1, 7, 4, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B.jpg');
+INSERT INTO `booktable` VALUES (15, '算法导论', 'Thomas H. Cormen', 'ISBN7-302-02368-104', 54, '机械工业出版社', '2010-06-01', 1, 4, 3, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E7%AE%97%E6%B3%95%E5%AF%BC%E8%AE%BA.jpg');
+INSERT INTO `booktable` VALUES (16, '人工智能导论（Python版）微课视频版', '姜春茂', 'ISBN7-302-02368-105', 55, '清华大学出版社', '2013-08-01', 1, 8, 1, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD.jpg');
+INSERT INTO `booktable` VALUES (17, '计算机图形学', '张燕 李楠  潘晓光', 'ISBN7-302-02368-106', 56, '清华大学出版社', '2016-02-01', 1, 5, 8, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%BE%E5%BD%A2%E5%AD%A6.jpg');
+INSERT INTO `booktable` VALUES (18, '数据挖掘原理', '麦克斯·布拉默', 'ISBN7-302-02368-107', 57, '机械工业出版社', '2018-04-01', 1, 6, 3, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98%E5%8E%9F%E7%90%86.jpg');
+INSERT INTO `booktable` VALUES (19, '计算机组成原理', '白中英  戴志涛等', 'ISBN7-302-02368-108', 58, '科学出版社', '2021-07-01', 1, 7, 6, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86.jpg');
+INSERT INTO `booktable` VALUES (20, '计算机体系结构', 'Gerard Blanchet       Bertrand Dupouy', 'ISBN7-302-02368-109', 59, '清华大学出版社', '2017-09-01', 1, 5, 1, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84.jpg');
+INSERT INTO `booktable` VALUES (21, 'MySQL数据库实用教程', '任丽娜 姚茂宣 邓文艳', 'ISBN7-302-02368-110', 42, '清华大学出版社', '2023-09-19', 1, 45, 1, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%94%A8%E6%95%99%E7%A8%8B.jpg');
+INSERT INTO `booktable` VALUES (22, '数据结构与算法', '冯贵良', 'ISBN7-302-02368-111', 89, '清华大学出版社', '2023-11-20', 1, 45, 1, 'https://shudb.oss-cn-beijing.aliyuncs.com/ks/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.jpg');
 
 -- ----------------------------
 -- Table structure for captcha
@@ -1023,7 +1035,7 @@ CREATE TABLE `captcha`  (
   `code` varchar(6) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `email`(`email` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of captcha
@@ -1048,7 +1060,7 @@ CREATE TABLE `lend`  (
   CONSTRAINT `lend_ibfk_1` FOREIGN KEY (`reader_id`) REFERENCES `reader` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `lend_ibfk_2` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `check_lend_status` CHECK (`status` in (_utf8mb4'未还',_utf8mb4'已还',_utf8mb4'超期未还'))
-) ENGINE = InnoDB AUTO_INCREMENT = 1001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1012 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of lend
@@ -1147,7 +1159,6 @@ INSERT INTO `lend` VALUES (100, 669, 6, '2013-01-09 05:47:09', '2021-06-08 22:12
 INSERT INTO `lend` VALUES (101, 573, 8, '2007-03-03 19:15:45', '2003-06-28 21:30:53', '2003-03-24 23:03:49', '超期未还');
 INSERT INTO `lend` VALUES (102, 525, 11, '2008-02-20 04:49:15', '2007-11-24 15:07:03', '2004-07-06 14:41:16', '未还');
 INSERT INTO `lend` VALUES (103, 410, 3, '2021-02-18 19:18:10', '2008-09-13 00:05:19', '2015-01-19 20:35:17', '超期未还');
-INSERT INTO `lend` VALUES (104, 1, 1, '2020-01-29 22:07:12', '2014-10-31 01:46:42', '2015-03-27 04:26:01', '超期未还');
 INSERT INTO `lend` VALUES (105, 852, 3, '2012-09-10 04:03:54', '2017-02-26 13:21:19', '2019-11-13 11:30:45', '已还');
 INSERT INTO `lend` VALUES (106, 918, 10, '2001-10-07 02:30:42', '2002-02-05 20:46:40', '2005-06-23 13:01:12', '超期未还');
 INSERT INTO `lend` VALUES (107, 446, 12, '2010-08-01 00:48:36', '2023-01-04 02:53:49', '2007-02-27 17:47:51', '超期未还');
@@ -1951,6 +1962,18 @@ INSERT INTO `lend` VALUES (997, 633, 1, '2013-11-13 03:49:13', '2021-05-25 16:50
 INSERT INTO `lend` VALUES (998, 331, 1, '2005-10-12 19:48:28', '2010-09-27 16:37:00', '2009-10-01 19:19:46', '已还');
 INSERT INTO `lend` VALUES (999, 69, 3, '2012-02-13 10:59:46', '2009-09-02 22:27:29', '2001-03-09 19:28:13', '已还');
 INSERT INTO `lend` VALUES (1000, 579, 3, '2019-06-11 20:06:22', '2021-05-12 19:06:56', '2004-04-15 19:08:11', '已还');
+INSERT INTO `lend` VALUES (1001, 13, 2, '2024-01-06 20:36:23', NULL, '2024-01-16 20:36:23', '未还');
+INSERT INTO `lend` VALUES (1002, 117, 2, '2024-01-06 20:39:49', NULL, '2024-01-16 20:39:49', '未还');
+INSERT INTO `lend` VALUES (1003, 159, 2, '2024-01-06 20:40:22', NULL, '2024-01-16 20:40:22', '未还');
+INSERT INTO `lend` VALUES (1004, 186, 2, '2024-01-06 20:40:24', NULL, '2024-01-16 20:40:24', '未还');
+INSERT INTO `lend` VALUES (1005, 222, 2, '2024-01-06 20:40:25', NULL, '2024-01-16 20:40:25', '未还');
+INSERT INTO `lend` VALUES (1006, 227, 2, '2024-01-06 20:40:27', NULL, '2024-01-16 20:40:27', '未还');
+INSERT INTO `lend` VALUES (1007, 312, 2, '2024-01-06 20:40:28', NULL, '2024-01-16 20:40:28', '未还');
+INSERT INTO `lend` VALUES (1008, 39, 1, '2024-01-09 23:38:10', NULL, '2024-03-09 00:00:00', '未还');
+INSERT INTO `lend` VALUES (1009, 60, 1, '2024-01-09 23:38:45', NULL, '2024-03-10 00:00:00', '未还');
+INSERT INTO `lend` VALUES (1010, 73, 1, '2024-01-09 23:38:46', NULL, '2024-03-10 00:00:00', '未还');
+INSERT INTO `lend` VALUES (1011, 96, 1, '2024-01-09 23:39:06', NULL, '2024-03-10 00:00:00', '未还');
+INSERT INTO `lend` VALUES (1012, 133, 1, '2024-01-09 23:39:08', NULL, '2024-03-10 00:00:00', '未还');
 
 -- ----------------------------
 -- Table structure for manager
@@ -1963,7 +1986,7 @@ CREATE TABLE `manager`  (
   `email` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `email`(`email` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of manager
@@ -1991,7 +2014,7 @@ CREATE TABLE `reader`  (
 -- ----------------------------
 -- Records of reader
 -- ----------------------------
-INSERT INTO `reader` VALUES (1, 'Mui Ka Ling', 'muikaling', 'klmui7@outlook.com', '66-146-1100', 0.00, 0);
+INSERT INTO `reader` VALUES (1, 'Mui Ka Ling', 'muikaling', 'klmui7@outlook.com', '66-146-1100', 0.00, 5);
 INSERT INTO `reader` VALUES (2, 'Wei Yunxi', 'yunxiw', 'wei4@yahoo.com', '330-535-5565', 0.00, 0);
 INSERT INTO `reader` VALUES (3, 'Fukuda Rin', 'rfukuda', 'frin@icloud.com', '(121) 188 4596', 380.44, 0);
 INSERT INTO `reader` VALUES (4, 'Chen Rui', 'ruiche7', 'rchen@gmail.com', '74-706-0483', 0.00, 4);
