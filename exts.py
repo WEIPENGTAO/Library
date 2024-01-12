@@ -13,7 +13,7 @@ def upload_image_to_cloud(image_file, bookname):
     access_key_secret = "5ip7QkeWFSpNiLp0i0SOi7m0ZHe86K"
     endpoint = "oss-cn-beijing.aliyuncs.com"
     bucket_name = "shudb"
-    upload_path = "uploadimg/" + bookname + ".jpg"
+    upload_path = "ks/" + bookname + ".jpg"
 
     # 获取图片内容
     image_content = image_file.read()
