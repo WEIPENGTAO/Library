@@ -44,7 +44,8 @@ def task3():
     reserves = Reserve.query.filter(
         time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) - Reserve.reserve_date > Reserve.reserve_deadline).all()
     for reserve in reserves:
-        reserve.delete()
+        db.session.delete(reserve)
+    db.session.commit()
 
 
 # 更新图书数量
@@ -58,7 +59,7 @@ def task4():
     for ISBN in ISBN_list:
         booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
         booktable.num = Book.query.filter(Book.ISBN == ISBN).count()
-    db.commit()
+    db.session.commit()
 
 
 # 提前5天提醒读者还书

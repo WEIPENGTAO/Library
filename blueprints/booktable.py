@@ -19,9 +19,11 @@ def addbooktable():
     manager_id = data.get('manager_id')
     version = data.get('version')
     image_file = request.files.get('image')
-    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, image_file]):
+    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    url = upload_image_to_cloud(image_file, name)
+    url = None
+    if image_file:
+        url = upload_image_to_cloud(image_file, name)
     if BookTable.query.filter(BookTable.ISBN == ISBN).first():
         return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,

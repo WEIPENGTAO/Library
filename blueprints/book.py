@@ -100,7 +100,8 @@ def addbook():
     location = data.get('location')
 
     manager_id = data.get('manager_id')
-    num = int(data.get('num', 0))
+    num = int(data.get('num', 1))
+    print(ISBN, location, manager_id, num)
 
     if not all([ISBN, location, manager_id]) and num >= 0:
         return jsonify({'code': 400, 'message': '参数不完整'})
@@ -195,7 +196,7 @@ def borrowbook():
         return jsonify({'code': 400, 'message': "超过最大借书天数60天。"})
 
     book.status = '已借出'
-    lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+    lend = Lend(book_id=book.book_id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                 due_date=due_date)
     reader.borrow_num += 1
     db.session.add(lend)
@@ -211,7 +212,7 @@ def returnbook():
     reader_id = data.get('reader_id')
     if not all([book_id, reader_id]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    book = Book.query.filter(Book.id == book_id, Book.status == '已借出').first()
+    book = Book.query.filter(Book.book_id == book_id, Book.status == '已借出').first()
     reader = Reader.query.filter_by(id == reader_id).first()
     lend = Lend.query.filter_by(book_id=book_id, reader_id=reader_id).first()
     if not book:

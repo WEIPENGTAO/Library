@@ -39,6 +39,7 @@ def queryreserve():
             'version': book_table_info.version,
             'author': book_table_info.author,
             'publisher': book_table_info.publish,
+            'reserve_id': reserve.id,
             'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),
             'book_id': reserve.book_id
         })
@@ -63,6 +64,8 @@ def reservebook():
     if not all([ISBN, reader_id, reserve_deadline]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     reserve_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    if reserve_deadline > 10 or reserve_deadline < 1:
+        return jsonify({'code': 400, 'message': '预约天数应在[1,10]之间'})
     reserve = Reserve(ISBN=ISBN, reader_id=reader_id, reserve_date=reserve_date, reserve_deadline=reserve_deadline)
     db.session.add(reserve)
     db.session.commit()
@@ -82,11 +85,27 @@ def reservenotice():
     return jsonify({'code': 200, 'message': '提醒成功'})
 
 
+# 删除一条预约记录
+@manager.route('/deletereserve/', methods=['POST'])
+def deletereserve():
+    data = request.json
+    id = data.get('id')
+    if not id:
+        return jsonify({'code': 400, 'message': '请提供记录id'})
+    reserve = Reserve.query.filter_by(id=id).first()
+    if not reserve:
+        return jsonify({'code': 400, 'message': '预约记录不存在'})
+    db.session.delete(reserve)
+    db.session.commit()
+    return jsonify({'code': 200, 'message': '删除成功'})
+
+
 # 删除过期预约
 @manager.route('/deleteexpiredreserve/', methods=['POST'])
 def deleteexpiredreserve():
     reserves = Reserve.query.filter(
         time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) - Reserve.reserve_date > Reserve.reserve_deadline).all()
     for reserve in reserves:
-        reserve.delete()
+        db.session.delete(reserve)
+    db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功'})
