@@ -18,29 +18,3 @@ class Book(db.Model):
         db.CheckConstraint("(location = '图书阅览室' AND status = '不外借') OR (location != '图书阅览室')",
                            name='check_book_location_status')
     )
-
-    # 增删改查
-    @classmethod
-    def add(cls, book_id, ISBN, location, manager_id):
-        book = cls(book_id=book_id, ISBN=ISBN, location=location, manager_id=manager_id)
-        db.session.add(book)
-        db.session.commit()
-
-    @classmethod
-    def delete(cls, book_id):
-        book = cls.query.filter_by(book_id=book_id).first()
-        db.session.delete(book)
-        db.session.commit()
-
-    @classmethod
-    def update(cls, book_id, ISBN, location, manager_id):
-        book = cls.query.filter_by(book_id=book_id).first()
-        book.ISBN = ISBN
-        book.location = location
-        book.manager_id = manager_id
-        db.session.commit()
-
-    @classmethod
-    def query_by_book_id(cls, book_id):
-        book = cls.query.filter_by(book_id=book_id).first()
-        return book
