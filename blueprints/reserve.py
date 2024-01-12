@@ -63,6 +63,8 @@ def reservebook():
     if not all([ISBN, reader_id, reserve_deadline]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     reserve_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    if reserve_deadline > 10 or reserve_deadline < 1:
+        return jsonify({'code': 400, 'message': '预约天数应在[1,10]之间'})
     reserve = Reserve(ISBN=ISBN, reader_id=reader_id, reserve_date=reserve_date, reserve_deadline=reserve_deadline)
     db.session.add(reserve)
     db.session.commit()
