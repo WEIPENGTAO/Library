@@ -27,26 +27,31 @@ def querylend():
     conditions = []
     if status:
         conditions.append(Lend.status == status)
-
     if reader_id:
         conditions.append(Lend.reader_id == reader_id)
+
 
     if not conditions:
         lend_info = Lend.query.order_by(asc(func.abs(datetime.now() - Lend.due_date)))
     else:
         lend_info = Lend.query.filter(and_(*conditions)).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
 
+
+    print(lend_info.count())
+    if lend_info.count()==0:
+        return jsonify({'code':400,'message':"暂无借阅记录！"})
     lend_info = lend_info.paginate(page=page, per_page=per_page, error_out=False)
+
 
     lend_info_serializable = []
     for lend in lend_info:
-        book = Book.query.filter_by(id=lend.book_id).first()
+        book = Book.query.filter_by(book_id=lend.book_id).first()
 
         book_table_info = BookTable.query.filter_by(ISBN=book.ISBN).first()
 
         lend_info_serializable.append({
             'book_name': book_table_info.name,
-            'lend_date' : book_table_info.lend_date,
+            'lend_date' : lend.lend_date,
             'reader_id': lend.reader_id,
             'ISBN': book_table_info.ISBN,
             'book_id': book.book_id,
