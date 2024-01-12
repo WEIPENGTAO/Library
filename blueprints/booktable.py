@@ -140,6 +140,6 @@ def querybooktable():
             'num': item.num
         }
     ]
-    return jsonify({'code': 200, 'message': result_list, 'remain_book_id': remain_list,'remaining': count})
+    return jsonify({'code': 200, 'message': "查询成功","result_list":result_list, 'remain_book_id': remain_list,'remaining': count})
 
 
