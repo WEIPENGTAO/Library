@@ -18,8 +18,9 @@ def addbooktable():
     pub_date = data.get('pub_date')
     manager_id = data.get('manager_id')
     version = data.get('version')
+    label = data.get('label')
     image_file = request.files.get('image')
-    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version]):
+    if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, label]):
         return jsonify({'code': 400, 'message': '参数不完整'})
     url = None
     if image_file:
@@ -27,7 +28,7 @@ def addbooktable():
     if BookTable.query.filter(BookTable.ISBN == ISBN).first():
         return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,
-                          manager_id=manager_id, num=0, version=version, url=url)
+                          manager_id=manager_id, num=0, version=version, url=url, label=label)
     db.session.add(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '添加成功'})
@@ -65,6 +66,7 @@ def updatebooktable():
     manager_id = data.get('manager_id')
     num = data.get('num')
     version = data.get('version')
+    label = data.get('label')
     image_file = request.files.get('image')
     if not old_ISBN:
         return jsonify({'code': 400, 'message': '没有ISBN，无法锁定图书表目信息。'})
@@ -89,6 +91,8 @@ def updatebooktable():
         booktable.num = num
     if version:
         booktable.version = version
+    if label:
+        booktable.label = label
     if image_file:
         delete_image_from_cloud(booktable.url)
         url = upload_image_to_cloud(image_file, name)
@@ -111,7 +115,7 @@ def showbooktable():
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
              'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
              'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version,
-             'url': booktable.url})
+             'url': booktable.url, 'label': booktable.label})
 
     return jsonify({'code': 200,
                     'message': '查询成功',
@@ -142,13 +146,13 @@ def querybooktable():
         remain_list.append(book.book_id)
 
     result_list = {
-            'name': item.name,
-            'ISBN': item.ISBN,
-            'author': item.author,
-            'version': item.version,
-            'publish': item.publish,
-            'num': item.num,
-            'url': item.url,
-        }
+        'name': item.name,
+        'ISBN': item.ISBN,
+        'author': item.author,
+        'version': item.version,
+        'publish': item.publish,
+        'num': item.num,
+        'url': item.url,
+    }
     return jsonify({'code': 200, 'message': "查询成功", "result_list": result_list, 'remain_book_id': remain_list,
                     'remaining': count})

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 351cab2a480f
+Revision ID: 912151a24597
 Revises: 
-Create Date: 2024-01-12 15:11:00.219848
+Create Date: 2024-01-12 15:55:06.829890
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '351cab2a480f'
+revision = '912151a24597'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -57,10 +57,12 @@ def upgrade():
     sa.Column('manager_id', sa.Integer(), nullable=True),
     sa.Column('num', sa.Integer(), nullable=False),
     sa.Column('version', sa.Integer(), nullable=False),
-    sa.Column('url', sa.String(length=255), nullable=False),
+    sa.Column('url', sa.String(length=255), nullable=True),
+    sa.Column('label', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['manager_id'], ['manager.id'], onupdate='CASCADE', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('ISBN')
+    sa.UniqueConstraint('ISBN'),
+    sa.UniqueConstraint('label')
     )
     op.create_table('book',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -92,14 +94,14 @@ def upgrade():
     )
     op.create_table('reserve',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('booktable_ISBN', sa.String(length=100), nullable=True),
+    sa.Column('ISBN', sa.String(length=100), nullable=True),
     sa.Column('reader_id', sa.Integer(), nullable=True),
     sa.Column('reserve_date', sa.DateTime(), nullable=False, comment='预约日期'),
     sa.Column('reserve_deadline', sa.Integer(), nullable=False, comment='预约期限（天）'),
     sa.Column('book_id', sa.String(length=20), nullable=True),
     sa.CheckConstraint('reserve_deadline <= 10', name='check_reserve_deadline'),
+    sa.ForeignKeyConstraint(['ISBN'], ['booktable.ISBN'], onupdate='CASCADE', ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['book_id'], ['book.book_id'], onupdate='CASCADE', ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['booktable_ISBN'], ['booktable.ISBN'], onupdate='CASCADE', ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['reader_id'], ['reader.id'], onupdate='CASCADE', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
