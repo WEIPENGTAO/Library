@@ -182,7 +182,7 @@ def borrowbook():
     book = None
     if book_id:
         book = Book.query.filter(Book.book_id == book_id, Book.status == '未借出').first()
-    if ISBN:
+    if book is None and ISBN:
         book = Book.query.filter(Book.ISBN == ISBN, Book.status == '未借出').first()
     if not book:
         return jsonify({'code': 400, 'message': '该图书不存在或数量不足'})
