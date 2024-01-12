@@ -197,7 +197,6 @@ def borrowbook():
     book.status = '已借出'
     lend = Lend(book_id=book.id, reader_id=reader_id, lend_date=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                 due_date=due_date)
-    print(book)
     reader.borrow_num += 1
     db.session.add(lend)
     db.session.commit()
@@ -224,6 +223,12 @@ def returnbook():
     if fine > book.booktable.price:
         fine = book.booktable.price
     reader.fine += fine
+    reader.borrow_num -= 1
+
+    if reader.fine > 0:
+        message = Message(subject='图书管理系统罚款通知', recipients=[reader.email],
+                          body='您尚欠借书违约费用' + str(reader.fine) + '元，请尽快缴纳罚款！')
+        mail.send(message)
 
     book.status = '未借出'
     lend.return_date = return_date
