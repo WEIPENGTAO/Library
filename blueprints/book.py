@@ -45,8 +45,13 @@ def querybook():
         conditions.append(BookTable.ISBN.ilike(f'%{ISBN}%'))
 
     # 查询 BookTable 表格
-    booktables = BookTable.query.filter(and_(*conditions)).all()
-    print(booktables)
+    if not conditions:
+          booktables = BookTable.query.all()
+    elif len(conditions) ==1:
+          booktables=BookTable.query.filter(*conditions).all()
+    else:
+          booktables = BookTable.query.filter(and_(*conditions)).all()
+    
     # 判断是否找到符合条件的书籍
     if not booktables:
         return jsonify({'code': 400, 'message': '没有找到符合条件的书籍'})

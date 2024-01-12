@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from operator import and_
 
 from flask import request, jsonify
 
@@ -121,14 +122,41 @@ def showbooktable():
     data = request.get_json()
     page = int(data.get('page', 1))  # 默认值为1
     per_page = int(data.get('per_page', 20))  # 默认值为20
-    booktables = BookTable.query.paginate(page=page, per_page=per_page, error_out=False)
+    name = data.get('name')
+    author = data.get('author')
+    version = data.get('version')
+    publish = data.get('publish')
+    ISBN = data.get('ISBN')
+
+    # 构建查询条件
+    conditions = []
+    if name:
+        conditions.append(BookTable.name.ilike(f'%{name}%'))
+    if author:
+        conditions.append(BookTable.author.ilike(f'%{author}%'))
+    if version:
+        conditions.append(BookTable.version.ilike(f'%{version}%'))
+    if publish:
+        conditions.append(BookTable.publish.ilike(f'%{publish}%'))
+    if ISBN:
+        conditions.append(BookTable.ISBN.ilike(f'%{ISBN}%'))
+
+    if len(conditions)>1:
+        query = BookTable.query.filter(and_(*conditions))
+    elif len(conditions)==1:
+        query = BookTable.query.filter(*conditions)
+    else:
+        query = BookTable.query
+
+    booktables = query.paginate(page=page, per_page=per_page, error_out=False)
+
     booktable_list = []
     for booktable in booktables.items:
         booktable_list.append(
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
              'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
              'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version,
-             'url': booktable.url, 'label': booktable.label})
+              'label': booktable.label})
 
     return jsonify({'code': 200,
                     'message': '查询成功',
