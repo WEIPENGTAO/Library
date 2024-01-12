@@ -100,7 +100,7 @@ def addbook():
     location = data.get('location')
     manager_id = data.get('manager_id')
     num = int(data.get('num', 1))
-    print(ISBN, location, manager_id, num)
+
 
     if not all([ISBN, location, manager_id]) and num >= 0:
         return jsonify({'code': 400, 'message': '参数不完整'})
@@ -112,7 +112,7 @@ def addbook():
     else:
         return jsonify({'code': 400, 'message': '图书位置信息不合理。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
-    for i in range(num):  # 逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
+    for i in range(num):
         book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,
                     book_id=str(booktable.label) + "." + str(booktable.num + i))
         db.session.add(book)
@@ -131,6 +131,8 @@ def deletebook():
     book = Book.query.filter_by(book_id=book_id).first()
     if book is None:
         return jsonify({'code': 400, 'message': "该图书不存在。"})
+    booktable=BookTable.query.filter(BookTable.ISBN ==book.ISBN).first()
+    booktable.num-=1
     db.session.delete(book)
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功！'})
