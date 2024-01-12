@@ -96,6 +96,7 @@ def deletereserve():
     if not reserve:
         return jsonify({'code': 400, 'message': '预约记录不存在'})
     reserve.delete()
+    db.commit()
     return jsonify({'code': 200, 'message': '删除成功'})
 
 
