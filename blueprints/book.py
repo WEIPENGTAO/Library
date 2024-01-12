@@ -211,7 +211,7 @@ def returnbook():
     reader_id = data.get('reader_id')
     if not all([book_id, reader_id]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    book = Book.query.filter(Book.id == book_id, Book.status == '已借出').first()
+    book = Book.query.filter(Book.book_id == book_id, Book.status == '已借出').first()
     reader = Reader.query.filter_by(id == reader_id).first()
     lend = Lend.query.filter_by(book_id=book_id, reader_id=reader_id).first()
     if not book:
