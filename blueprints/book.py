@@ -1,3 +1,4 @@
+import decimal
 import time
 from datetime import datetime
 
@@ -214,28 +215,37 @@ def returnbook():
     reader_id = data.get('reader_id')
     if not all([book_id, reader_id]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    book = Book.query.filter(Book.book_id == book_id, Book.status == '已借出').first()
-    reader = Reader.query.filter_by(id == reader_id).first()
+
     lend = Lend.query.filter_by(book_id=book_id, reader_id=reader_id).first()
-    if not book:
-        return jsonify({'code': 400, 'message': '该图书不存在或未借出!请核对图书编号！'})
+    if(not lend):
+        return jsonify({'code':400,'message': '该图书不存在或未借出!请核对图书编号！'})
+
+    book = Book.query.filter(Book.book_id == book_id).first()
+    reader = Reader.query.filter_by(id=reader_id).first()
+    booktable=BookTable.query.filter_by(ISBN=book.ISBN).first()
+
     return_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     fine = 0
-    if return_date > lend.due_date:
-        fine = (time.time() - time.mktime(time.strptime(book.due_date, '%Y-%m-%d %H:%M:%S'))) / 60 / 60 / 24 * 0.1
-    if fine > book.booktable.price:
-        fine = book.booktable.price
-    reader.fine += fine
-    reader.borrow_num -= 1
+    current_time = datetime.fromtimestamp(time.time())
+    if current_time > lend.due_date:
+        current_time = datetime.fromtimestamp(time.time())
+        fine = (current_time - lend.due_date).days * 0.1
+        if fine > decimal.Decimal(booktable.price):
+            fine = decimal.Decimal(booktable.price)
+            reader.fine = decimal.Decimal(reader.fine) + fine
+
+    reader.borrow_num-=1
 
     if reader.fine > 0:
         message = Message(subject='图书管理系统罚款通知', recipients=[reader.email],
-                          body='您尚欠借书违约费用' + str(reader.fine) + '元，请尽快缴纳罚款！')
+                          body='尊敬的读者'+str(reader_id)+'您尚欠借书违约费用' + str(reader.fine) + '元，请尽快缴纳罚款！')
         mail.send(message)
 
     book.status = '未借出'
     lend.return_date = return_date
     lend.status = "已还"
+
+
     reserve = Reserve.query.filter(Reserve.ISBN == book.ISBN).order_by(Reserve.id.asc()).first()
     if reserve:
         reader = Reader.query.filter_by(reader_id=reserve.reader_id).first()
