@@ -73,7 +73,7 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "/overtime",
-        name: "超时查询",
+        name: "预约图书",
         meta: { show: true },
         components: { overtime: OvertimeView },
       },

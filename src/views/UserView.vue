@@ -130,27 +130,8 @@
             :rules="userRules"
             ref="addUserFormRef"
             class="add-user-form"
-          >
-            <el-form-item
-              label="所属组"
-              :label-width="formLabelWidth"
-              prop="groups"
-            >
-              <el-select
-                v-model="addUserForm.groups"
-                placeholder="请选择所属组"
-              >
-                <el-option
-                  v-for="item in UserType"
-                  :key="item.typeId"
-                  :label="item.label"
-                  :value="item.typeName"
-                >
-                </el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item
-              label="用户名"
+            ><el-form-item
+              label="邮箱"
               :label-width="formLabelWidth"
               prop="username"
             >
@@ -171,41 +152,6 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="姓名"
-              :label-width="formLabelWidth"
-              prop="name"
-            >
-              <el-input
-                v-model="addUserForm.name"
-                autocomplete="off"
-              ></el-input>
-            </el-form-item>
-            <el-form-item
-              label="性别"
-              :label-width="formLabelWidth"
-              prop="gender"
-            >
-              <el-select v-model="addUserForm.gender" placeholder="请选择性别">
-                <el-option
-                  v-for="item in GenderType"
-                  :key="item.typeId"
-                  :label="item.typeName"
-                  :value="item.typeName"
-                >
-                </el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item
-              label="借书卡号"
-              :label-width="formLabelWidth"
-              prop="idCard"
-            >
-              <el-input
-                v-model.number="addUserForm.idCard"
-                autocomplete="off"
-              ></el-input>
-            </el-form-item>
-            <el-form-item
               label="手机号"
               :label-width="formLabelWidth"
               prop="phone"
@@ -215,24 +161,6 @@
                 autocomplete="off"
                 maxlength="11"
               ></el-input>
-            </el-form-item>
-            <el-form-item
-              label="身份"
-              :label-width="formLabelWidth"
-              prop="identity"
-            >
-              <el-select
-                v-model="addUserForm.identity"
-                placeholder="请选择身份"
-              >
-                <el-option
-                  v-for="item in IdentityType"
-                  :key="item.typeId"
-                  :label="item.typeName"
-                  :value="item.typeName"
-                >
-                </el-option>
-              </el-select>
             </el-form-item>
           </el-form>
           <template #footer>

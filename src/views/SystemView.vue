@@ -201,7 +201,7 @@ const updatePasswordForm = reactive({
 // 修改密码表单规则
 const updatePasswordRules = reactive<FormRules>({
   //password: [{ required: true, message: "请输入新密码", trigger: "blur" }],
-  email: [{ required: true, message: "请输入新密码", trigger: "blur" }],
+  email: [{ required: true, message: "请输入邮箱", trigger: "blur" }],
 });
 // 邮箱验证按钮
 const addEmailButton = (formEl: FormInstance | undefined) => {

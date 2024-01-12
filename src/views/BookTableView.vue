@@ -72,13 +72,29 @@
         <!--        图书表格栏-->
         <el-row class="book-table">
           <el-col>
-            <el-table :data="books" height="100%" empty-text="没有数据">
+            <el-table
+              ref="tableRef"
+              :data="books"
+              height="100%"
+              empty-text="没有数据"
+              @header-dragend="handleHeaderDragend"
+              border
+              style="width: 100%"
+            >
               <el-table-column fixed prop="id" label="Id" width="50" />
-              <el-table-column prop="name" label="书名" width="130" />
-              <el-table-column prop="author" label="作者" width="170" />
+              <el-table-column prop="url" label="图书封面" width="100">
+                <template #default="scope">
+                  <el-image
+                    :src="scope.row.url"
+                    style="width: 100px; height: 120px"
+                  ></el-image>
+                </template>
+              </el-table-column>
+              <el-table-column prop="name" label="书名" width="150" />
+              <el-table-column prop="author" label="作者" width="130" />
               <el-table-column prop="publish" label="出版商" width="130" />
               <el-table-column prop="ISBN" label="ISBN号码" width="170" />
-              <el-table-column label="出版年月" prop="pub_date">
+              <el-table-column label="出版年月" prop="pub_date" width="100">
                 <template v-slot="{ row }">
                   <span>{{ formatDate(row.pub_date) }}</span>
                 </template>
@@ -90,7 +106,7 @@
                   <span>{{ formatPrice(row.price) }}</span>
                 </template>
               </el-table-column>
-              <el-table-column fixed="right" label="操作">
+              <el-table-column fixed="right" label="操作" width="150">
                 <template #default="books">
                   <el-button
                     @click="editFromButton(editBookFormRef, books.row)"
@@ -180,6 +196,16 @@
               ></el-input>
             </el-form-item>
             <el-form-item
+              label="图书标签"
+              :label-width="formLabelWidth"
+              prop="label"
+            >
+              <el-input
+                v-model="addBookForm.label"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
               label="出版年月"
               :label-width="formLabelWidth"
               prop="pub_date"
@@ -214,6 +240,23 @@
                 autocomplete="off"
                 maxlength="3"
               ></el-input>
+            </el-form-item>
+            <el-form-item label="图书封面上传" prop="image">
+              <el-upload
+                class="box_upload"
+                action="/api/manager/addbooktable/"
+                name="image"
+                :http-request="uploadFile"
+                accept=""
+                list-type="picture"
+                :limit="1"
+                ref="uploadRef"
+                :show-file-list="true"
+                :on-change="imgPreview"
+                multiple
+              >
+                <el-button size="small" type="primary">点击上传</el-button>
+              </el-upload>
             </el-form-item>
           </el-form>
           <template #footer>
@@ -287,6 +330,16 @@
             >
               <el-input
                 v-model="editBookForm.publish"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="图书标签"
+              :label-width="formLabelWidth"
+              prop="label"
+            >
+              <el-input
+                v-model="editBookForm.label"
                 autocomplete="off"
               ></el-input>
             </el-form-item>
@@ -365,8 +418,9 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
+import { nextTick, onMounted, reactive, ref } from "vue";
+import Sortable from "sortablejs";
+import type { FormInstance, FormRules, UploadInstance } from "element-plus";
 import { Plus, Search } from "@element-plus/icons-vue";
 import axios from "axios";
 import { ElMessageBox, ElMessage } from "element-plus";
@@ -485,7 +539,7 @@ const searchBook = () => {
     axios.post("/api/manager/showbooktable", searchObj).then((resp) => {
       console.log("查询", searchObj);
       books.value = resp.data.booktables;
-      pageTotal.value = resp.data.totalElements;
+      pageTotal.value = resp.data.total_count;
       const code = resp.data.code;
       const message = resp.data.message;
       // 查询失败
@@ -506,23 +560,6 @@ const searchBook = () => {
   }
 };
 
-// 图书表单判断
-const checkISBN = (rule: any, value: any, callback: any) => {
-  if (!value) {
-    return callback(new Error("请输入ISBN号码"));
-  } else {
-    if (!Number.isInteger(value)) {
-      callback(new Error("请输入正确的ISBN号码"));
-    } else {
-      let isbnReg = /^[1-9]\d{12}$/;
-      if (!isbnReg.test(value)) {
-        callback(new Error("请输入13位ISBN号码"));
-      } else {
-        callback();
-      }
-    }
-  }
-};
 // 图书表单规则
 const bookRules = reactive<FormRules>({
   pub_date: [{ required: true, message: "请输入出版日期", trigger: "blur" }],
@@ -533,8 +570,8 @@ const bookRules = reactive<FormRules>({
   version: [{ required: true, message: "请输入数量(本)", trigger: "blur" }],
   ISBN: [{ required: true, message: "请输入ISBN", trigger: "blur" }],
   manager_id: [{ required: true, message: "请输入经办人", trigger: "blur" }],
+  label: [{ required: true, message: "请输入图书标签", trigger: "blur" }],
 });
-
 // 添加图书对话框显示
 let addBookFormVisible = ref(false);
 // 添加表单按钮
@@ -546,7 +583,7 @@ const addFromButton = (formEl: FormInstance | undefined) => {
 
 // 添加图书表单
 const addBookFormRef = ref<FormInstance>();
-let addBookForm = reactive({
+let addBookForm = reactive<any>({
   name: "",
   author: "",
   publish: "",
@@ -555,6 +592,8 @@ let addBookForm = reactive({
   ISBN: "",
   pub_date: "",
   manager_id: "",
+  label: "",
+  url: "",
 });
 
 // 添加图书按钮
@@ -562,7 +601,8 @@ const addBookButton = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      axios.post("/api/manager/addbooktable/", addBookForm).then((resp) => {
+      console.log("ceshi", addBookForm);
+      axios.post("/api/manager/addbooktable", addBookForm).then((resp) => {
         const code = resp.data.code;
         const message = resp.data.message;
 
@@ -611,6 +651,8 @@ let editBookForm = reactive({
   pub_date: "",
   manager_id: "",
   num: "",
+  label: "",
+  id: "",
 });
 
 // 编辑图书按钮
@@ -689,6 +731,92 @@ const init = () => {
   searchBook();
 };
 init();
+
+// 上传图片
+const uploadRef = ref<UploadInstance>();
+function uploadFile(param) {
+  const uploadForm1 = new FormData();
+  uploadForm1.append("image", param.file);
+  axios.post("/api/manager/addurl", uploadForm1).then((resp) => {
+    addBookForm.url = resp.data.url;
+  });
+}
+function imgPreview(file, fileList) {
+  let fileName = file.name;
+  let regex = /(.jpg|.jpeg|.png)$/;
+  if (regex.test(fileName.toLowerCase())) {
+    let picUrl = URL.createObjectURL(file.raw);
+    addBookForm.image = fileList;
+  } else {
+    //移除最后一个元素
+    fileList.pop();
+    ElMessage.error("请注意图片格式！");
+  }
+}
+
+// 表格可变长
+const tableData = reactive({
+  key: new Date().getTime(),
+  columnList: [
+    {
+      label: "ID",
+      prop: "id",
+      width: "180",
+    },
+    {
+      label: "Name",
+      prop: "name",
+      width: "180",
+    },
+    {
+      label: "Amount1",
+      prop: "amount1",
+      width: "180",
+    },
+    {
+      label: "Amount2",
+      prop: "amount2",
+      width: "180",
+    },
+    {
+      label: "Amount3",
+      prop: "amount3",
+      width: "180",
+    },
+  ],
+});
+const tableRef = ref();
+let sortable: Sortable;
+onMounted(() => {
+  initTableHeaderDrag(); // 初始化拖拽事件
+});
+
+function initTableHeaderDrag() {
+  if (sortable) {
+    sortable.destroy();
+  }
+  let el = tableRef.value.$el.querySelector(".el-table__header-wrapper tr");
+  sortable = Sortable.create(el, {
+    animation: 150,
+    onEnd(evt: any) {
+      const oldItem = tableData.columnList[evt.oldIndex];
+      tableData.columnList.splice(evt.oldIndex, 1);
+      tableData.columnList.splice(evt.newIndex, 0, oldItem);
+      tableData.key = new Date().getTime(); // 变更key，强制重绘table。如果不强制变更的话，会出现一些奇奇怪怪的问题，列宽度调整也会出现问题
+      nextTick(() => {
+        initTableHeaderDrag(); // 因为table被强制重新绘制，因此需要重新监听
+      });
+    },
+  });
+}
+function handleHeaderDragend(newWidth, oldWidth, column, event) {
+  for (let item of tableData.columnList) {
+    if (item.label == column.label) {
+      item.width = newWidth;
+    }
+  }
+  initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
+}
 </script>
 
 <style lang="scss">

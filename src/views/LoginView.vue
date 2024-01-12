@@ -140,21 +140,6 @@
                 autocomplete="off"
               ></el-input>
             </el-form-item>
-            <el-form-item
-              label="性别"
-              :label-width="formLabelWidth"
-              prop="gender"
-            >
-              <el-select v-model="addUserForm.gender" placeholder="请选择性别">
-                <el-option
-                  v-for="item in GenderType"
-                  :key="item.typeId"
-                  :label="item.typeName"
-                  :value="item.typeName"
-                >
-                </el-option>
-              </el-select>
-            </el-form-item>
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -218,7 +203,10 @@ const addFromButton = (formEl: FormInstance | undefined) => {
 
 // 用户表单判断
 const userRules = reactive<FormRules>({
-  email: [{ required: true, message: "请输入用户名称", trigger: "blur" }],
+  email: [{ required: true, message: "请输入邮箱", trigger: "blur" }],
+  // name: [{ required: true, message: "请输入用户名称", trigger: "blur" }],
+  // code: [{ required: true, message: "请输入验证码", trigger: "blur" }],
+  // password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 });
 
 // 判断用户登录状态

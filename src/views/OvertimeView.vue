@@ -47,19 +47,18 @@
         <el-row class="overtime-table">
           <el-col>
             <el-table :data="overtimes" height="100%" empty-text="没有数据">
-              <el-table-column fixed prop="id" label="Id" width="50" />
-              <el-table-column prop="bookName" label="书名" />
-              <el-table-column prop="isbn" label="ISBN号码" />
-              <el-table-column prop="username" label="借阅人" />
-              <el-table-column prop="idCard" label="借阅卡号" />
-              <el-table-column prop="borrowTime" label="借阅时间" />
-              <el-table-column prop="overtimeTime" label="应归还时间" />
+              <el-table-column fixed prop="reserve_id" label="Id" width="50" />
+              <el-table-column prop="book_name" label="书名" />
+              <el-table-column prop="author" label="作者" />
+              <el-table-column prop="ISBN" label="ISBN" />
+              <el-table-column prop="reader_id" label="借阅人ID" />
+              <el-table-column prop="reserve_date" label="预约时间" />
               <el-table-column fixed="right" label="操作">
                 <template #default="overtimes">
                   <el-button
                     @click="overtimeBookDialog(overtimes.row)"
                     type="text"
-                    >归还</el-button
+                    >取消预约</el-button
                   >
                 </template>
               </el-table-column>
@@ -81,7 +80,10 @@
           title="归还图书"
           width="500px"
         >
-          <span>确认归还 {{ overtimeName }}</span>
+          <span
+            >确认取消借阅人： {{ overtimeReader }} 对
+            {{ overtimeName }} 的预约？</span
+          >
           <template #footer>
             <span class="dialog-footer">
               <el-button @click="overtimeBookDialogVisible = false"
@@ -104,31 +106,13 @@ import { ElMessageBox } from "element-plus";
 
 // 超时未归还图书信息
 let overtimes = ref();
-const getOvertime = () => {
-  axios
-    .get(
-      "http://localhost:8888/borrow/overtime/" +
-        pageNum.value +
-        "/" +
-        pageSize.value
-    )
-    .then((resp) => {
-      overtimes.value = resp.data.content;
-      pageTotal.value = resp.data.totalElements;
-    });
-};
-
 // 显示数据数量选项
 let pageNum = ref(1);
 let pageSize = ref(10);
 let pageTotal = ref(0);
 const page = (val: number) => {
   pageNum.value = val;
-  if (searchInput.value == undefined) {
-    getOvertime();
-  } else {
-    searchOvertime();
-  }
+  searchOvertime();
 };
 
 // 数据显示框
@@ -150,11 +134,7 @@ let sizeOptions = [
 // 修改显示数据量
 const changeSize = (value: number) => {
   pageSize.value = value;
-  if (searchInput.value == undefined) {
-    getOvertime();
-  } else {
-    searchOvertime();
-  }
+  searchOvertime();
 };
 
 // 搜索框数据
@@ -166,71 +146,62 @@ const searchButton = () => {
 };
 // 搜索超时未归还图书信息
 const searchOvertime = () => {
-  if (searchInput.value != "" && searchInput.value != undefined) {
-    axios
-      .get(
-        "http://localhost:8888/borrow/overtime/search/" +
-          searchInput.value +
-          "/" +
-          pageNum.value +
-          "/" +
-          pageSize.value
-      )
-      .then((resp) => {
-        overtimes.value = resp.data.content;
-        pageTotal.value = resp.data.totalElements;
-      });
-  } else {
-    getOvertime();
-  }
+  let obj = {
+    reader_id: searchInput.value,
+    page: pageNum.value,
+    per_page: pageSize.value,
+  };
+  axios.post("/api/manager/queryreserve/", obj).then((resp) => {
+    const code = resp.data.code;
+    const message = resp.data.message;
+    overtimes.value = resp.data.booktables;
+    pageTotal.value = resp.data.total_count;
+  });
 };
 // 超时查询
 let overtimeName = ref("");
 let overtimeId = ref(0);
+let overtimeReader = ref(0);
 let overtimeBookDialogVisible = ref(false);
 const overtimeBookDialog = (row: any) => {
-  overtimeId.value = row.id;
-  overtimeName.value = row.bookName;
-  console.log(overtimeId);
-  console.log(overtimeName);
+  overtimeId.value = row.reserve_id;
+  overtimeName.value = row.book_name;
+  overtimeReader.value = row.reader_id;
   overtimeBookDialogVisible.value = true;
 };
 // 归还图书
 const overtimeBook = () => {
   if (overtimeId.value) {
-    axios
-      .post("http://localhost:8888/borrow/return/" + overtimeId.value)
-      .then((resp) => {
-        const statusCode = resp.data.statusCode;
+    let obj = {
+      id: overtimeId.value,
+    };
+    axios.post("/api/manager/deletereserve/", obj).then((resp) => {
+      const code = resp.data.code;
+      const message = resp.data.message;
 
-        // 归还失败
-        if (statusCode == 0) {
-          ElMessageBox.alert("归还图书失败，请重试", "信息", {
-            confirmButtonText: "确认",
-          });
-        }
-        // 归还成功
-        if (statusCode == 1) {
-          ElMessageBox.alert("归还图书成功", "信息", {
-            confirmButtonText: "确认",
-            callback: () => {
-              overtimeBookDialogVisible.value = false;
-            },
-          });
-        }
-        // 借阅记录不存在
-        if (statusCode == 2) {
-          ElMessageBox.alert("归还失败，此借阅记录不存在", "信息", {
-            confirmButtonText: "确认",
-          });
-        }
-      });
+      // 取消预约失败
+      if (code == 400) {
+        ElMessageBox.alert(message, {
+          confirmButtonText: "确认",
+        });
+        searchOvertime();
+      }
+      // 取消预约成功
+      if (code == 200) {
+        ElMessageBox.alert(message, {
+          confirmButtonText: "确认",
+          callback: () => {
+            overtimeBookDialogVisible.value = false;
+          },
+        });
+      }
+    });
   }
 };
 
 // 初始化
 const init = () => {
-  getOvertime();
+  searchOvertime();
 };
 init();
 </script>
