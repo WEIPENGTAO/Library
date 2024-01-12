@@ -100,7 +100,8 @@ def addbook():
     location = data.get('location')
 
     manager_id = data.get('manager_id')
-    num = int(data.get('num', 0))
+    num = int(data.get('num', 1))
+    print(ISBN, location, manager_id, num)
 
     if not all([ISBN, location, manager_id]) and num >= 0:
         return jsonify({'code': 400, 'message': '参数不完整'})

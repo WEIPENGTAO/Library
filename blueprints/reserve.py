@@ -95,8 +95,8 @@ def deletereserve():
     reserve = Reserve.query.filter_by(id=id).first()
     if not reserve:
         return jsonify({'code': 400, 'message': '预约记录不存在'})
-    reserve.delete()
-    db.commit()
+    db.session.delete(reserve)
+    db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功'})
 
 
@@ -106,5 +106,6 @@ def deleteexpiredreserve():
     reserves = Reserve.query.filter(
         time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) - Reserve.reserve_date > Reserve.reserve_deadline).all()
     for reserve in reserves:
-        reserve.delete()
+        db.session.delete(reserve)
+    db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功'})

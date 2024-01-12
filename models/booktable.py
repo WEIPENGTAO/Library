@@ -11,7 +11,7 @@ class BookTable(db.Model):
     publish = db.Column(db.String(100), nullable=False)
     pub_date = db.Column(db.Date, nullable=False)
     manager_id = db.Column(db.Integer, db.ForeignKey('manager.id', onupdate='CASCADE', ondelete='CASCADE'))
-    num = db.Column(db.Integer, nullable=False)
+    num = db.Column(db.Integer, nullable=False, default=0)
     version = db.Column(db.Integer, nullable=False, default=1)
-    url = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255), nullable=True)
 
