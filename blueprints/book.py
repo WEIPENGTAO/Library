@@ -1,3 +1,4 @@
+import decimal
 import time
 from datetime import datetime
 
@@ -12,6 +13,7 @@ from models.booktable import BookTable
 from models.lend import Lend
 from models.reader import Reader
 from models.reserve import Reserve
+
 
 
 # 根据ISBN查询图书信息,添加分页查询和模糊查询功能,可以兼容以前的版本
@@ -43,8 +45,13 @@ def querybook():
         conditions.append(BookTable.ISBN.ilike(f'%{ISBN}%'))
 
     # 查询 BookTable 表格
-    booktables = BookTable.query.filter(and_(*conditions)).all()
-    print(booktables)
+    if not conditions:
+          booktables = BookTable.query.all()
+    elif len(conditions) ==1:
+          booktables=BookTable.query.filter(*conditions).all()
+    else:
+          booktables = BookTable.query.filter(and_(*conditions)).all()
+    
     # 判断是否找到符合条件的书籍
     if not booktables:
         return jsonify({'code': 400, 'message': '没有找到符合条件的书籍'})
@@ -98,10 +105,9 @@ def addbook():
     data = request.json
     ISBN = data.get('ISBN')
     location = data.get('location')
-
     manager_id = data.get('manager_id')
     num = int(data.get('num', 1))
-    print(ISBN, location, manager_id, num)
+
 
     if not all([ISBN, location, manager_id]) and num >= 0:
         return jsonify({'code': 400, 'message': '参数不完整'})
@@ -113,7 +119,7 @@ def addbook():
     else:
         return jsonify({'code': 400, 'message': '图书位置信息不合理。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
-    for i in range(num):  # 逻辑有点讲不通，其实，但是缺少字段，这部分后期商量
+    for i in range(num):
         book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,
                     book_id=str(booktable.label) + "." + str(booktable.num + i))
         db.session.add(book)
@@ -132,6 +138,8 @@ def deletebook():
     book = Book.query.filter_by(book_id=book_id).first()
     if book is None:
         return jsonify({'code': 400, 'message': "该图书不存在。"})
+    booktable=BookTable.query.filter(BookTable.ISBN ==book.ISBN).first()
+    booktable.num-=1
     db.session.delete(book)
     db.session.commit()
     return jsonify({'code': 200, 'message': '删除成功！'})
@@ -212,28 +220,37 @@ def returnbook():
     reader_id = data.get('reader_id')
     if not all([book_id, reader_id]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    book = Book.query.filter(Book.book_id == book_id, Book.status == '已借出').first()
-    reader = Reader.query.filter_by(id == reader_id).first()
+
     lend = Lend.query.filter_by(book_id=book_id, reader_id=reader_id).first()
-    if not book:
-        return jsonify({'code': 400, 'message': '该图书不存在或未借出!请核对图书编号！'})
+    if(not lend):
+        return jsonify({'code':400,'message': '该图书不存在或未借出!请核对图书编号！'})
+
+    book = Book.query.filter(Book.book_id == book_id).first()
+    reader = Reader.query.filter_by(id=reader_id).first()
+    booktable=BookTable.query.filter_by(ISBN=book.ISBN).first()
+
     return_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     fine = 0
-    if return_date > lend.due_date:
-        fine = (time.time() - time.mktime(time.strptime(book.due_date, '%Y-%m-%d %H:%M:%S'))) / 60 / 60 / 24 * 0.1
-    if fine > book.booktable.price:
-        fine = book.booktable.price
-    reader.fine += fine
-    reader.borrow_num -= 1
+    current_time = datetime.fromtimestamp(time.time())
+    if current_time > lend.due_date:
+        current_time = datetime.fromtimestamp(time.time())
+        fine = (current_time - lend.due_date).days * 0.1
+        if fine > decimal.Decimal(booktable.price):
+            fine = decimal.Decimal(booktable.price)
+            reader.fine = decimal.Decimal(reader.fine) + fine
+
+    reader.borrow_num-=1
 
     if reader.fine > 0:
         message = Message(subject='图书管理系统罚款通知', recipients=[reader.email],
-                          body='您尚欠借书违约费用' + str(reader.fine) + '元，请尽快缴纳罚款！')
+                          body='尊敬的读者'+str(reader_id)+'您尚欠借书违约费用' + str(reader.fine) + '元，请尽快缴纳罚款！')
         mail.send(message)
 
     book.status = '未借出'
     lend.return_date = return_date
     lend.status = "已还"
+
+
     reserve = Reserve.query.filter(Reserve.ISBN == book.ISBN).order_by(Reserve.id.asc()).first()
     if reserve:
         reader = Reader.query.filter_by(reader_id=reserve.reader_id).first()

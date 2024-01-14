@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
-
 import config
 from blueprints import *
 from exts import db, mail, scheduler
@@ -21,3 +20,7 @@ app.register_blueprint(reader)
 if __name__ == '__main__':
     scheduler.start()
     app.run(debug=True, host='0.0.0.0')
+
+
+
+

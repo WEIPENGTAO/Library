@@ -7,7 +7,7 @@ class BookTable(db.Model):
     name = db.Column(db.String(100), nullable=False)
     author = db.Column(db.String(100), nullable=False)
     ISBN = db.Column(db.String(100), nullable=False, unique=True)
-    price = db.Column(db.Float(10, 2), nullable=False)
+    price = db.Column(db.Float(10,2), nullable=False)
     publish = db.Column(db.String(100), nullable=False)
     pub_date = db.Column(db.Date, nullable=False)
     manager_id = db.Column(db.Integer, db.ForeignKey('manager.id', onupdate='CASCADE', ondelete='CASCADE'))
