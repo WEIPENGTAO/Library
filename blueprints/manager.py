@@ -7,6 +7,7 @@ from flask_mail import Message
 from exts import db, mail
 from models.captcha import Captcha
 from models.manager import Manager
+from models.reader import Reader
 
 manager = Blueprint('manager', __name__, url_prefix='/manager')
 
@@ -98,3 +99,35 @@ def updatepassword():
     manager.password = password
     db.session.commit()
     return jsonify({'code': 200, 'message': '修改成功'})
+
+
+# 查询读者信息
+@manager.route('/queryreader/', methods=['POST'])
+def queryreader():
+    data = request.get_json()
+    page = int(data.get('page', 1))
+    per_page = int(data.get('per_page', 25))
+
+    readers = Reader.query.order_by(Reader.id).paginate(page=page, per_page=per_page, error_out=False)
+
+    readers_serializable = []
+    for reader in readers:
+        readers_serializable.append({
+            'id': reader.id,
+            'name': reader.name,
+            'email': reader.email,
+            'phone': reader.phone,
+            'fine': reader.fine,
+            'borrow_num': reader.borrow_num,
+        })
+
+    response = {
+        'code': 200,
+        'message': '查询成功',
+        'total_count': readers.total,
+        'readers': readers_serializable,
+        'page': readers.page,
+        'per_page': readers.per_page
+    }
+
+    return jsonify(response)
