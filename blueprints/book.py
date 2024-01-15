@@ -29,6 +29,7 @@ def querybook():
     publish = data.get('publish')
     ISBN = data.get('ISBN')
     book_id = data.get('book_id')
+    status = data.get('status')
 
     # 构建查询条件
     conditions = []
@@ -42,6 +43,8 @@ def querybook():
         conditions.append(BookTable.publish.ilike(f'%{publish}%'))
     if ISBN:
         conditions.append(BookTable.ISBN.ilike(f'%{ISBN}%'))
+    if status:
+        conditions.append(Book.status == status)
 
     # 查询 BookTable 表格
     if not conditions:
@@ -57,16 +60,16 @@ def querybook():
 
     # 获取 ISBN 属性列表
     booktable_ISBN_list = [booktable.ISBN for booktable in booktables]
-    books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
-                                                                                               per_page=per_page,
-                                                                                               error_out=False)
+
     if not book_id:
         books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
                                                                                                    per_page=per_page,
                                                                                                    error_out=False)
     if book_id:
-        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.book_id == book_id).order_by(
-            Book.ISBN).paginate(page=page, per_page=per_page, error_out=False)
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.book_id == book_id).order_by(Book.ISBN).paginate(page=page, per_page=per_page,error_out=False)
+    if status:
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.status == status).order_by(Book.ISBN).paginate(page=page, per_page=per_page,error_out=False)
+
 
     result_list = [
         {
@@ -113,14 +116,14 @@ def addbook():
 
     if location == '图书流通室':
         status = '未借出'
-    elif location == "图书借阅室":
+    elif location == "图书阅览室":
         status = "不外借"
     else:
         return jsonify({'code': 400, 'message': '图书位置信息不合理。'})
     booktable = BookTable.query.filter(BookTable.ISBN == ISBN).first()
     for i in range(num):
         book = Book(ISBN=ISBN, location=location, manager_id=manager_id, status=status,
-                    book_id=str(booktable.label) + "." + str(booktable.num + i))
+                    book_id=str(booktable.label) + "." + str(booktable.num + i + 1))
         db.session.add(book)
 
     booktable.num += num
@@ -185,10 +188,10 @@ def borrowbook():
     if not reader:
         return jsonify({'code': 400, 'message': "读者编号不存在！请注册或核实记录！"})
     if reader.borrow_num >= 10:
-        return jsonify({'code': 400, 'message': "读者" + reader.id + "借阅的读书数量已达上限10本。请先归还图书！"})
+        return jsonify({'code': 400, 'message': "读者" + str(reader.id) + "借阅的读书数量已达上限10本。请先归还图书！"})
     if reader.fine > 0:
         return jsonify(
-            {'code': 400, 'message': "读者" + reader.id + "尚欠借书违约费用" + reader.fine + "，请先缴纳罚款！"})
+            {'code': 400, 'message': "读者" + str(reader.id) + "尚欠借书违约费用" + str(reader.fine) + "，请先缴纳罚款！"})
 
     book = None
     if book_id:
