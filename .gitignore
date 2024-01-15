@@ -3,3 +3,4 @@
 sql
 .idea
 __pycache__
+/migrations/
