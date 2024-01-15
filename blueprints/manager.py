@@ -106,7 +106,7 @@ def updatepassword():
 def queryreader():
     data = request.get_json()
     page = int(data.get('page', 1))
-    per_page = int(data.get('per_page', 25))
+    per_page = int(data.get('per_page', 10))
 
     readers = Reader.query.order_by(Reader.id).paginate(page=page, per_page=per_page, error_out=False)
 

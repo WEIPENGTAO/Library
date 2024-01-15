@@ -74,7 +74,7 @@ def login():
     reader = Reader.query.filter(Reader.email == email, Reader.password == password).first()
     if not reader:
         return jsonify({'code': 400, 'message': '邮箱或密码错误'})
-    return jsonify({'code': 200, 'message': '登录成功', 'email': email})
+    return jsonify({'code': 200, 'message': '登录成功', 'email': email, 'reader_id': reader.id})
 
 
 # 注销函数
@@ -114,6 +114,7 @@ def signout():
 
     if not book_count_map:
         db.session.delete(reader)
+        db.session.commit()
         return jsonify({'code': 200, 'message': '注销成功！'})
     else:
         reason = '你存在以下借阅的图书信息: ' + ';'.join(
@@ -125,23 +126,20 @@ def signout():
 # 读者查询自己的借阅信息
 @reader.route('/checkLend/', methods=['POST'])
 def checkLend():
+    global lend_info
     data = request.get_json()
     page = int(data.get('page', 1))
     per_page = int(data.get('per_page', 25))
     status = data.get('status')
-    reader_id = data.get('reader_id')  # 从前端获取
-    if reader_id:
-        lend_info = Lend.query.filter_by(reader_id=reader_id).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
-    else:
-        lend_info = Lend.query.order_by(asc(func.abs(datetime.now() - Lend.due_date)))
+    reader_id = int(data.get('reader_id'))  # 从前端获取
+    lend_info = Lend.query.filter_by(reader_id=reader_id).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
     if status:
         lend_info = lend_info.filter_by(status=status)
     lend_info = lend_info.paginate(page=page, per_page=per_page, error_out=False)
 
     lend_info_serializable = []
     for lend in lend_info:
-        book = Book.query.filter_by(id=lend.book_id).first()
-
+        book = Book.query.filter_by(book_id=lend.book_id).first()
         book_table_info = BookTable.query.filter_by(ISBN=book.ISBN).first()
 
         lend_info_serializable.append({
@@ -150,7 +148,7 @@ def checkLend():
             'book_id': lend.book_id,
             'version': book_table_info.version,
             'author': book_table_info.author,
-            'lend_date': lend.lend_date,
+            'lend_date': lend.lend_date.strftime('%Y-%m-%d %H:%M:%S'),
             'reader_id': lend.reader_id,
             'publisher': book_table_info.publish,
             'return_date': lend.lend_date.strftime('%Y-%m-%d %H:%M:%S'),
@@ -184,14 +182,14 @@ def checkreserve():
 
     reserve_info_serializable = []
     for reserve in reserve_info:
-        book_table_info = BookTable.query.filter_by(ISBN=reserve.booktable_ISBN).first()
+        book_table_info = BookTable.query.filter_by(ISBN=reserve.ISBN).first()
 
         reserve_info_serializable.append({
             'book_name': book_table_info.name,
             'ISBN': book_table_info.ISBN,
             'book_id': reserve.book_id,
             'version': book_table_info.version,
-            'reader_id': reserve.booktable_reader_id,
+            'reader_id': reserve.reader_id,
             'author': book_table_info.author,
             'publisher': book_table_info.publish,
             'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),
@@ -206,3 +204,27 @@ def checkreserve():
         'page': reserve_info.page,
         'per_page': reserve_info.per_page
     })
+# 返回读者信息
+@reader.route('/queryreader1/', methods=['POST'])
+def queryreader1():
+    data = request.get_json()
+    reader_id = data.get('reader_id')
+    readers = Reader.query.filter_by(id=reader_id)
+    readers_serializable = [
+        {
+            'id': reader.id,
+            'name': reader.name,
+            'email': reader.email,
+            'phone': reader.phone,
+            'fine': reader.fine,
+            'borrow_num': reader.borrow_num,
+        }
+        for reader in readers
+    ]
+    response = {
+        'code': 200,
+        'message': '查询成功',
+        'reader': readers_serializable,
+    }
+
+    return jsonify(response)
