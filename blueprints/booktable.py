@@ -156,7 +156,7 @@ def showbooktable():
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
              'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
              'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version,
-              'label': booktable.label})
+              'label': booktable.label,'url': booktable.url})
 
     return jsonify({'code': 200,
                     'message': '查询成功',
