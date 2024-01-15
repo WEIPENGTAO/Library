@@ -187,7 +187,7 @@ def borrowbook():
         return jsonify({'code': 400, 'message': "读者" + reader.id + "借阅的读书数量已达上限10本。请先归还图书！"})
     if reader.fine > 0:
         return jsonify(
-            {'code': 400, 'message': "读者" + reader.id + "尚欠借书违约费用" + reader.fine + "，请先缴纳罚款！"})
+            {'code': 400, 'message': "读者" + str(reader.id) + "尚欠借书违约费用" + str(reader.fine) + "，请先缴纳罚款！"})
 
     book = None
     if book_id:
