@@ -1,7 +1,6 @@
 import time
 from datetime import timedelta
 
-from flask import Blueprint
 from flask_mail import Message
 
 from exts import db, mail, scheduler
@@ -9,8 +8,6 @@ from models.book import Book
 from models.booktable import BookTable
 from models.lend import Lend
 from models.reserve import Reserve
-
-manager = Blueprint('manager', __name__, url_prefix='/manager')
 
 
 # 还书提醒
