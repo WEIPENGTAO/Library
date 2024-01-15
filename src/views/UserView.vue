@@ -569,33 +569,25 @@ const deleteUserDialog = (row: any) => {
 // 删除用户按钮
 const deleteUser = () => {
   if (deleteId.value) {
-    axios
-      .post("http://localhost:8888/user/delete/" + deleteId.value)
-      .then((resp) => {
-        const statusCode = resp.data.statusCode;
-
-        // 删除失败
-        if (statusCode == 0) {
-          ElMessageBox.alert("删除用户失败，请重试", "信息", {
-            confirmButtonText: "确认",
-          });
-        }
-        // 删除成功
-        if (statusCode == 1) {
-          ElMessageBox.alert("删除成功", "信息", {
-            confirmButtonText: "确认",
-            callback: () => {
-              deleteUserDialogVisible.value = false;
-            },
-          });
-        }
-        // Id 不存在
-        if (statusCode == 2) {
-          ElMessageBox.alert("删除失败，此 Id 不存在", "信息", {
-            confirmButtonText: "确认",
-          });
-        }
-      });
+    let obj = {
+      reader_id: deleteId.value,
+    };
+    axios.post("api/reader/signout/", obj).then((resp) => {
+      const code = resp.data.code;
+      const message = resp.data.message;
+      if (code == 200) {
+        ElMessageBox.alert(message, {
+          confirmButtonText: "确定",
+        });
+        searchUser();
+      }
+      if (code == 400) {
+        ElMessageBox.alert(message, {
+          confirmButtonText: "确定",
+        });
+      }
+      deleteUserDialogVisible.value = false;
+    });
   }
 };
 
