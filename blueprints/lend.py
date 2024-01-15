@@ -10,6 +10,7 @@ from exts import mail
 from models.book import Book
 from models.booktable import BookTable
 from models.lend import Lend
+from models.reader import Reader
 
 
 # 分页展示管理员查询读者的借阅信息
@@ -76,8 +77,8 @@ def returnnotices():
     lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                               Lend.status == '未归还').all()
     for lend in lends:
-        reader = lend.reader
-        book = lend.book
+        reader = Reader.query.filter_by(id=lend.reader_id).first()
+        book = Book.query.filter_by(book_id=lend.book_id).first()
         message = Message(subject='图书管理系统通知', recipients=[reader.email],
                           body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
         mail.send(message)
