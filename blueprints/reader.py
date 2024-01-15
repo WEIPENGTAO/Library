@@ -47,6 +47,7 @@ def register():
     name = data.get('name')
     password = data.get('password')
     email = data.get('email')
+    phone = data.get('phone')
     code = data.get('code')
     if not all([name, password, email, code]):
         return jsonify({'code': 400, 'message': '参数不完整'})
@@ -56,8 +57,9 @@ def register():
     captcha = Captcha.query.filter(Captcha.email == email).first()
     if not captcha or captcha.code != code:
         return jsonify({'code': 400, 'message': '验证码错误'})
-    reader = Reader(name=name, password=password, email=email)
+    reader = Reader(name=name, password=password, email=email, phone=phone)
     db.session.add(reader)
+    db.session.commit()
     return jsonify({'code': 200, 'message': '注册成功'})
 
 
