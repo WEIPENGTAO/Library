@@ -63,10 +63,11 @@ def querybook():
                                                                                                error_out=False)
     if not book_id:
         books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list)).order_by(Book.ISBN).paginate(page=page,
+                                                                                                   per_page=per_page,
                                                                                                    error_out=False)
     if book_id:
         books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.book_id == book_id).order_by(
-            Book.ISBN).paginate(page=page, error_out=False)
+            Book.ISBN).paginate(page=page, per_page=per_page,error_out=False)
 
     result_list = [
         {
