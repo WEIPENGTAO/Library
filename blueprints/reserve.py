@@ -61,7 +61,7 @@ def reservebook():
     reserve_deadline = data.get('reserve_deadline')
     if not all([ISBN, reader_id, reserve_deadline]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    reserve_deadline=int(reserve_deadline)
+    reserve_deadline = int(reserve_deadline)
     reserve_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     if reserve_deadline > 10 or reserve_deadline < 1:
         return jsonify({'code': 400, 'message': '预约天数应在[1,10]之间'})
@@ -74,13 +74,19 @@ def reservebook():
 # 预约到书提醒
 @manager.route('/reservenotice/', methods=['POST'])
 def reservenotice():
-    reserves = Reserve.query.filter().all()
-    for reserve in reserves:
-        reader = reserve.reader
-        booktable = reserve.booktable
-        message = Message(subject='图书管理系统通知', recipients=[reader.email],
-                          body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
-        mail.send(message)
+    data = request.json
+    reader_id = data.get('reader_id')
+    ISBN = data.get('ISBN')
+    if not all([reader_id, ISBN]):
+        return jsonify({'code': 400, 'message': '请提供读者id和图书ISBN'})
+    reserve = Reserve.query.filter_by(reader_id=reader_id, ISBN=ISBN).first()
+    if not reserve:
+        return jsonify({'code': 400, 'message': '预约记录不存在'})
+    reader = reserve.reader
+    booktable = BookTable.query.filter_by(ISBN=ISBN).first()
+    message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                      body='您预约的图书《' + booktable.name + '》已到，请及时借阅')
+    mail.send(message)
     return jsonify({'code': 200, 'message': '提醒成功'})
 
 

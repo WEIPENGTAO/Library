@@ -86,15 +86,17 @@ def signout():
 
     reader = Reader.query.filter(Reader.id == reader_id).first()
     if not reader:
-        return jsonify({'code': 400, 'message': '注销失败','reason':"读者不存在。请核对自己的读者ID"})
+        return jsonify({'code': 400, 'message': '注销失败', 'reason': "读者不存在。请核对自己的读者ID"})
     # 预约记录中全部是有效的记录，读者注销直接级联删除，重点考虑罚金和借阅记录
     if reader.fine > 0:
-        return jsonify({'code': 400, 'message': '注销失败','reason':'罚金尚未缴纳，请及时缴纳！其中罚金会随着时间逐渐增加，请做一名诚信读者！'})
-    if reader.borrow_num >0:
-        return jsonify({'code': 400, 'message': '注销失败','reason':"你尚存在其余借阅书目。此时不可以注销账户，请及时归还图书。"})
+        return jsonify({'code': 400, 'message': '注销失败',
+                        'reason': '罚金尚未缴纳，请及时缴纳！其中罚金会随着时间逐渐增加，请做一名诚信读者！'})
+    if reader.borrow_num > 0:
+        return jsonify(
+            {'code': 400, 'message': '注销失败', 'reason': "你尚存在其余借阅书目。此时不可以注销账户，请及时归还图书。"})
     lend_list = Lend.query.filter(Lend.reader_id == reader_id).all()
-    book_count_map = {}#未还读书数量
-    map = {}#未还读书书名
+    book_count_map = {}  # 未还读书数量
+    map = {}  # 未还读书书名
     for lend in lend_list:
         if lend.status == "未还" or lend.status == "超期未还":
             book_id = lend.book_id
@@ -105,16 +107,16 @@ def signout():
                     book_count_map[book_name] += 1
                 else:
                     book_count_map[book_name] = 1
-                    booktable=BookTable.query.filter_by(ISBN=book_name).first()
-                    map[book_name] =booktable.name
-
+                    booktable = BookTable.query.filter_by(ISBN=book_name).first()
+                    map[book_name] = booktable.name
 
     if not book_count_map:
         db.session.delete(reader)
         return jsonify({'code': 200, 'message': '注销成功！'})
     else:
-        reason = '你存在以下借阅的图书信息: ' + ';'.join([f'书名：{map[key]},ISBN编号：{key},借阅数量：{value}本' for key, value in
-                                                           book_count_map.items()]) + ".以上图书尚未归还，请尽快归还！若不归还，会处以罚金。请做一名诚信读者！"
+        reason = '你存在以下借阅的图书信息: ' + ';'.join(
+            [f'书名：{map[key]},ISBN编号：{key},借阅数量：{value}本' for key, value in
+             book_count_map.items()]) + ".以上图书尚未归还，请尽快归还！若不归还，会处以罚金。请做一名诚信读者！"
         return jsonify({'code': 400, 'message': '注销失败', 'reason': reason})
 
 
@@ -124,14 +126,14 @@ def checkLend():
     data = request.get_json()
     page = int(data.get('page', 1))
     per_page = int(data.get('per_page', 25))
-    status=data.get('status')
+    status = data.get('status')
     reader_id = data.get('reader_id')  # 从前端获取
     if reader_id:
         lend_info = Lend.query.filter_by(reader_id=reader_id).order_by(asc(func.abs(datetime.now() - Lend.due_date)))
     else:
         lend_info = Lend.query.order_by(asc(func.abs(datetime.now() - Lend.due_date)))
     if status:
-        lend_info=lend_info.filter_by(status=status)
+        lend_info = lend_info.filter_by(status=status)
     lend_info = lend_info.paginate(page=page, per_page=per_page, error_out=False)
 
     lend_info_serializable = []
@@ -146,7 +148,7 @@ def checkLend():
             'book_id': lend.book_id,
             'version': book_table_info.version,
             'author': book_table_info.author,
-            'lend_date':lend.lend_date,
+            'lend_date': lend.lend_date,
             'reader_id': lend.reader_id,
             'publisher': book_table_info.publish,
             'return_date': lend.lend_date.strftime('%Y-%m-%d %H:%M:%S'),
@@ -172,7 +174,7 @@ def checkreserve():
 
     reader_id = data.get('reader_id')  # 从前端获取
     if reader_id:
-         reserve_info = Reserve.query.filter_by(reader_id=reader_id).order_by(desc(Reserve.reserve_date))
+        reserve_info = Reserve.query.filter_by(reader_id=reader_id).order_by(desc(Reserve.reserve_date))
     else:
         reserve_info = Reserve.query.order_by(desc(Reserve.reserve_date))
 
@@ -187,7 +189,7 @@ def checkreserve():
             'ISBN': book_table_info.ISBN,
             'book_id': reserve.book_id,
             'version': book_table_info.version,
-            'reader_id':reserve.booktable_reader_id,
+            'reader_id': reserve.booktable_reader_id,
             'author': book_table_info.author,
             'publisher': book_table_info.publish,
             'reserve_date': reserve.reserve_date.strftime('%Y-%m-%d %H:%M:%S'),

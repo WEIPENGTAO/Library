@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 from operator import and_
 
@@ -14,8 +13,9 @@ from models.booktable import BookTable
 @manager.route('/addurl/', methods=['POST'])
 def addurl():
     image = request.files['image']
-    url = upload_image_to_cloud(image, image.filename.split(".")[0]+str(datetime.now()))
+    url = upload_image_to_cloud(image, image.filename.split(".")[0] + str(datetime.now()))
     return jsonify({"url": url})
+
 
 @manager.route('/addbooktable/', methods=['POST'])
 def addbooktable():
@@ -29,18 +29,18 @@ def addbooktable():
     manager_id = data.get('manager_id')
     version = data.get('version')
     label = data.get('label')
-    url=data.get('url')
+    url = data.get('url')
 
     if not all([name, author, ISBN, price, publish, pub_date, manager_id, version, label]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    booktable1=BookTable.query.filter_by(label=label).first()
-    if  booktable1:
-        return jsonify({'code':400,'message':'图书标签重复'})
+    booktable1 = BookTable.query.filter_by(label=label).first()
+    if booktable1:
+        return jsonify({'code': 400, 'message': '图书标签重复'})
 
     if BookTable.query.filter(BookTable.ISBN == ISBN).first():
         return jsonify({'code': 400, 'message': '该图书已存在'})
     booktable = BookTable(name=name, author=author, ISBN=ISBN, price=price, publish=publish, pub_date=pub_date,
-                          manager_id=manager_id, num=0, version=version,  url=url,label=label)
+                          manager_id=manager_id, num=0, version=version, url=url, label=label)
     db.session.add(booktable)
     db.session.commit()
     return jsonify({'code': 200, 'message': '添加成功'})
@@ -138,9 +138,9 @@ def showbooktable():
     if ISBN:
         conditions.append(BookTable.ISBN.ilike(f'%{ISBN}%'))
 
-    if len(conditions)>1:
+    if len(conditions) > 1:
         query = BookTable.query.filter(and_(*conditions))
-    elif len(conditions)==1:
+    elif len(conditions) == 1:
         query = BookTable.query.filter(*conditions)
     else:
         query = BookTable.query
@@ -153,7 +153,7 @@ def showbooktable():
             {'id': booktable.id, 'ISBN': booktable.ISBN, 'name': booktable.name, 'author': booktable.author,
              'price': booktable.price, 'publish': booktable.publish, 'pub_date': booktable.pub_date,
              'manager_id': booktable.manager_id, 'num': booktable.num, 'version': booktable.version,
-              'label': booktable.label,'url': booktable.url})
+             'label': booktable.label, 'url': booktable.url})
 
     return jsonify({'code': 200,
                     'message': '查询成功',
