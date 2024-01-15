@@ -283,7 +283,6 @@ def returnnotice():
     if not lend:
         return jsonify({'code': 400, 'message': '借阅记录不存在'})
     reader = Reader.query.filter_by(id=reader_id).first()
-    book = Book.query.filter_by(book_id=book_id).first()
     message = Message(subject='图书管理系统通知', recipients=[reader.email],
                       body='您借阅的图书《' + book_name + '》已到期，请及时归还')
     mail.send(message)
