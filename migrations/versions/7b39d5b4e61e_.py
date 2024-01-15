@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 2fb35d94ed43
+Revision ID: 7b39d5b4e61e
 Revises: 
-Create Date: 2024-01-12 16:22:54.264924
+Create Date: 2024-01-15 15:41:47.641122
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '2fb35d94ed43'
+revision = '7b39d5b4e61e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -39,7 +39,7 @@ def upgrade():
     sa.Column('password', sa.String(length=20), nullable=False),
     sa.Column('email', sa.String(length=100), nullable=False),
     sa.Column('phone', sa.String(length=20), nullable=False),
-    sa.Column('fine', sa.DECIMAL(precision=6, scale=2), nullable=False),
+    sa.Column('fine', sa.DECIMAL(precision=10, scale=2), nullable=False),
     sa.Column('borrow_num', sa.Integer(), nullable=False, comment='一名读者最多只能借阅十本图书，且每本图书最多只能借两个月'),
     sa.CheckConstraint('borrow_num >= 0 AND borrow_num <= 10', name='check_reader_borrow_num'),
     sa.CheckConstraint('fine >= 0', name='check_fine'),
