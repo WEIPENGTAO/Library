@@ -85,8 +85,6 @@ def updatebooktable():
     booktable = BookTable.query.filter(BookTable.id == id).first()
     if not booktable:
         return jsonify({'code': 400, 'message': '该ISBN信息图书不存在！'})
-    if label and BookTable.query.filter(BookTable.label == label) != booktable:
-        return jsonify({'code': 400, 'message': 'label重复'})
     if ISBN:
         booktable.ISBN = ISBN
     if name:

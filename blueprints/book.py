@@ -151,6 +151,7 @@ def updateBook():
     ISBN = data.get('ISBN')
     location = data.get('location')
     manager_id = data.get('manager_id')  # 这个需要从前端获得，只有管理员登录后才行，所以对此字段不考虑外检约束
+    status = data.get('status')
     if not book_id:
         return jsonify({'code': 400, 'message': '输入空白的图书编号信息！'})
     book = Book.query.filter_by(book_id=book_id).first()
@@ -162,6 +163,8 @@ def updateBook():
         book.ISBN = ISBN
     if location in ["图书阅览室", "图书流通室"]:
         book.location = location
+    if status in ["未借出", "已借出", "不外借", "已预约"]:
+        book.status = status
     if manager_id:
         book.manager_id = manager_id
     db.session.commit()
