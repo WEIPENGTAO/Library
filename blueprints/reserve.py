@@ -61,7 +61,7 @@ def reservebook():
     reserve_deadline = data.get('reserve_deadline')
     if not all([ISBN, reader_id, reserve_deadline]):
         return jsonify({'code': 400, 'message': '参数不完整'})
-    reserve_deadline=int(reserve_deadline)
+    reserve_deadline = int(reserve_deadline)
     reserve_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     if reserve_deadline > 10 or reserve_deadline < 1:
         return jsonify({'code': 400, 'message': '预约天数应在[1,10]之间'})

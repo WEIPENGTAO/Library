@@ -66,10 +66,11 @@ def querybook():
                                                                                                    per_page=per_page,
                                                                                                    error_out=False)
     if book_id:
-        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.book_id == book_id).order_by(Book.ISBN).paginate(page=page, per_page=per_page,error_out=False)
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.book_id == book_id).order_by(
+            Book.ISBN).paginate(page=page, per_page=per_page, error_out=False)
     if status:
-        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.status == status).order_by(Book.ISBN).paginate(page=page, per_page=per_page,error_out=False)
-
+        books = Book.query.filter(Book.ISBN.in_(booktable_ISBN_list), Book.status == status).order_by(
+            Book.ISBN).paginate(page=page, per_page=per_page, error_out=False)
 
     result_list = [
         {
@@ -191,7 +192,8 @@ def borrowbook():
         return jsonify({'code': 400, 'message': "读者" + str(reader.id) + "借阅的读书数量已达上限10本。请先归还图书！"})
     if reader.fine > 0:
         return jsonify(
-            {'code': 400, 'message': "读者" + str(reader.id) + "尚欠借书违约费用" + str(reader.fine) + "，请先缴纳罚款！"})
+            {'code': 400,
+             'message': "读者" + str(reader.id) + "尚欠借书违约费用" + str(reader.fine) + "，请先缴纳罚款！"})
 
     book = None
     if book_id:
