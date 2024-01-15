@@ -276,14 +276,14 @@ def returnnotice():
     data = request.json
     reader_id = data.get('reader_id')
     book_id = data.get('book_id')
+    book_name = data.get('book_name')
     if not all([reader_id, book_id]):
         return jsonify({'code': 400, 'message': '请提供读者id和图书id'})
     lend = Lend.query.filter_by(reader_id=reader_id, book_id=book_id).first()
     if not lend:
         return jsonify({'code': 400, 'message': '借阅记录不存在'})
     reader = Reader.query.filter_by(id=reader_id).first()
-    book = Book.query.filter_by(book_id=book_id).first()
     message = Message(subject='图书管理系统通知', recipients=[reader.email],
-                      body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
+                      body='您借阅的图书《' + book_name + '》已到期，请及时归还')
     mail.send(message)
     return jsonify({'code': 200, 'message': '提醒成功'})
