@@ -238,9 +238,9 @@ def returnbook():
     if current_time > lend.due_date:
         current_time = datetime.fromtimestamp(time.time())
         fine = (current_time - lend.due_date).days * 0.1
-        if fine > decimal.Decimal(booktable.price):
-            fine = decimal.Decimal(booktable.price)
-            reader.fine = decimal.Decimal(reader.fine) + fine
+    if fine > decimal.Decimal(booktable.price):
+        fine = decimal.Decimal(booktable.price)
+    reader.fine = decimal.Decimal(reader.fine) + fine
 
     reader.borrow_num -= 1
 
@@ -263,3 +263,22 @@ def returnbook():
         mail.send(message)
     db.session.commit()
     return jsonify({'code': 200, 'message': '还书成功'})
+
+
+# 还书提醒
+@manager.route('/returnnotice/', methods=['POST'])
+def returnnotice():
+    data = request.json
+    reader_id = data.get('reader_id')
+    book_id = data.get('book_id')
+    if not all([reader_id, book_id]):
+        return jsonify({'code': 400, 'message': '请提供读者id和图书id'})
+    lend = Lend.query.filter_by(reader_id=reader_id, book_id=book_id).first()
+    if not lend:
+        return jsonify({'code': 400, 'message': '借阅记录不存在'})
+    reader = lend.reader
+    book = lend.book
+    message = Message(subject='图书管理系统通知', recipients=[reader.email],
+                      body='您借阅的图书《' + book.booktable.name + '》已到期，请及时归还')
+    mail.send(message)
+    return jsonify({'code': 200, 'message': '提醒成功'})
