@@ -272,7 +272,6 @@ const reserveBookButton = (formEl: FormInstance | undefined) => {
               reserveBookFormVisible.value = false;
             },
           });
-          searchBook();
         }
       });
     } else {

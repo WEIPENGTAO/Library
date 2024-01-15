@@ -24,7 +24,7 @@
             <el-row>
               <el-col :span="18">
                 <el-input
-                  placeholder="请输入搜索内容"
+                  placeholder="请输入读者ID"
                   v-model="searchInput"
                   :suffix-icon="Search"
                   class="search-input"
@@ -46,7 +46,14 @@
         <!--        超时查询表格栏-->
         <el-row class="overtime-table">
           <el-col>
-            <el-table :data="overtimes" height="100%" empty-text="没有数据">
+            <el-table
+              ref="tableRef"
+              :data="overtimes"
+              height="100%"
+              empty-text="没有数据"
+              @header-dragend="handleHeaderDragend"
+              border
+            >
               <el-table-column fixed prop="reserve_id" label="Id" width="50" />
               <el-table-column prop="book_name" label="书名" />
               <el-table-column prop="author" label="作者" />
@@ -59,6 +66,9 @@
                     @click="overtimeBookDialog(overtimes.row)"
                     type="text"
                     >取消预约</el-button
+                  >
+                  <el-button @click="overtimeBookDao(overtimes.row)" type="text"
+                    >发送预约到书提醒</el-button
                   >
                 </template>
               </el-table-column>
@@ -99,7 +109,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { nextTick, reactive, ref, onMounted } from "vue";
+import Sortable from "sortablejs";
 import { Search } from "@element-plus/icons-vue";
 import axios from "axios";
 import { ElMessageBox } from "element-plus";
@@ -169,7 +180,7 @@ const overtimeBookDialog = (row: any) => {
   overtimeReader.value = row.reader_id;
   overtimeBookDialogVisible.value = true;
 };
-// 归还图书
+// 取消预约
 const overtimeBook = () => {
   if (overtimeId.value) {
     let obj = {
@@ -184,7 +195,6 @@ const overtimeBook = () => {
         ElMessageBox.alert(message, {
           confirmButtonText: "确认",
         });
-        searchOvertime();
       }
       // 取消预约成功
       if (code == 200) {
@@ -196,7 +206,32 @@ const overtimeBook = () => {
         });
       }
     });
+    searchOvertime();
   }
+};
+// 预约到书
+const overtimeBookDao = (row: any) => {
+  let obj = {
+    reader_id: row.reader_id,
+    ISBN: row.ISBN,
+  };
+  axios.post("/api/manager/reservenotice/", obj).then((resp) => {
+    const code = resp.data.code;
+    const message = resp.data.message;
+
+    // 取消预约失败
+    if (code == 400) {
+      ElMessageBox.alert(message, {
+        confirmButtonText: "确认",
+      });
+    }
+    // 取消预约成功
+    if (code == 200) {
+      ElMessageBox.alert(message, {
+        confirmButtonText: "确认",
+      });
+    }
+  });
 };
 
 // 初始化
@@ -204,6 +239,69 @@ const init = () => {
   searchOvertime();
 };
 init();
+// 表格可变长
+const tableData = reactive({
+  key: new Date().getTime(),
+  columnList: [
+    {
+      label: "ID",
+      prop: "id",
+      width: "180",
+    },
+    {
+      label: "Name",
+      prop: "name",
+      width: "180",
+    },
+    {
+      label: "Amount1",
+      prop: "amount1",
+      width: "180",
+    },
+    {
+      label: "Amount2",
+      prop: "amount2",
+      width: "180",
+    },
+    {
+      label: "Amount3",
+      prop: "amount3",
+      width: "180",
+    },
+  ],
+});
+const tableRef = ref();
+let sortable: Sortable;
+onMounted(() => {
+  initTableHeaderDrag(); // 初始化拖拽事件
+});
+
+function initTableHeaderDrag() {
+  if (sortable) {
+    sortable.destroy();
+  }
+  let el = tableRef.value.$el.querySelector(".el-table__header-wrapper tr");
+  sortable = Sortable.create(el, {
+    animation: 150,
+    onEnd(evt: any) {
+      const oldItem = tableData.columnList[evt.oldIndex];
+      tableData.columnList.splice(evt.oldIndex, 1);
+      tableData.columnList.splice(evt.newIndex, 0, oldItem);
+      tableData.key = new Date().getTime(); // 变更key，强制重绘table。如果不强制变更的话，会出现一些奇奇怪怪的问题，列宽度调整也会出现问题
+      nextTick(() => {
+        initTableHeaderDrag(); // 因为table被强制重新绘制，因此需要重新监听
+      });
+    },
+  });
+}
+function handleHeaderDragend(newWidth, oldWidth, column, event) {
+  for (let item of tableData.columnList) {
+    if (item.label == column.label) {
+      item.width = newWidth;
+    }
+  }
+  initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
+}
 </script>
 
 <style lang="scss">

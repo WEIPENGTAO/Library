@@ -43,17 +43,10 @@
       <!--      介绍卡片-->
       <el-card class="introduce">
         <template #header> 开源信息 </template>
-        <p>作者信息：KSaMar</p>
+        <p>作者信息：陈祥、魏鹏涛、龙云飞</p>
         <p>该项目模拟学校图书馆的图书管理系统</p>
         <p>
-          码云下载地址：<a
-            href="https://github.com/baobaoJK/Vue-Element-Plus-SpringBoot-Library"
-            >Gitee</a
-          >
-        </p>
-        <p>
-          GitHub下载地址：<a
-            href="https://gitee.com/baobao_JK/Vue-Element-Plus-SpringBoot-Library"
+          GitHub下载地址：<a href="https://github.com/WEIPENGTAO/Library"
             >GitHub</a
           >
         </p>
@@ -87,6 +80,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { Reading, Failed, List, Timer } from "@element-plus/icons-vue";
+import { ElMessageBox, ElMessage } from "element-plus";
 import axios from "axios";
 
 // 仪表盘数据
@@ -135,13 +129,70 @@ setInterval(function () {
 
 // 获取仪表盘数据
 const getDashboard = () => {
-  axios.get("http://localhost:8888/book/dashboard/").then((resp) => {
-    bookCount.value = resp.data.bookCount;
-    overtimeCount.value = resp.data.overtimeCount;
-    borrowCount.value = resp.data.borrowCount;
+  let obj = {
+    page: 1,
+    per_page: 10,
+  };
+  axios.post("/api/manager/querybook/", obj).then((resp) => {
+    const code = resp.data.code;
+    const message = resp.data.message;
+    bookCount.value = resp.data.total_count;
+    // 查询失败
+    if (code == 400) {
+      ElMessage({
+        message: message,
+        type: "error",
+      });
+    }
+    // 查询成功
+    if (code == 200) {
+      ElMessage({
+        message: message,
+        type: "success",
+      });
+    }
+  });
+};
+const getDashboard2 = () => {
+  let obj = {
+    status: "已借出",
+    page: 1,
+    per_page: 10,
+  };
+  axios.post("/api/manager/querybook/", obj).then((resp) => {
+    const code = resp.data.code;
+    const message = resp.data.message;
+    borrowCount.value = resp.data.total_count;
+    // 查询失败
+    if (code == 400) {
+      ElMessage({
+        message: message,
+        type: "error",
+      });
+    }
+    // 查询成功
+    if (code == 200) {
+      ElMessage({
+        message: message,
+        type: "success",
+      });
+    }
+  });
+};
+// 搜索借阅信息
+const searchBorrow = () => {
+  let obj = {
+    status: "超期未还",
+    page: 1,
+    per_page: 10,
+  };
+  axios.post("/api/manager/querylend/", obj).then((resp) => {
+    overtimeCount.value = resp.data.total_count;
   });
 };
 getDashboard();
+getDashboard2();
+searchBorrow();
 
 // 获取日志数据
 let logs = ref();

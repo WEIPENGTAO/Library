@@ -22,22 +22,6 @@
           </el-col>
           <el-col :span="16" class="search-input-pane">
             <el-row>
-              <el-col :span="4">
-                <el-select
-                  v-model="searchModel"
-                  placeholder="搜索类型"
-                  @change="changeSearch"
-                  class="search-size"
-                >
-                  <el-option
-                    v-for="item in searchOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  >
-                  </el-option>
-                </el-select>
-              </el-col>
               <el-col :span="14">
                 <el-input
                   placeholder="请输入搜索内容"
@@ -74,32 +58,19 @@
           <el-col>
             <el-table :data="users" height="100%" empty-text="没有数据">
               <el-table-column fixed prop="id" label="Id" width="50" />
-              <el-table-column prop="groups" label="组名" />
-              <el-table-column prop="username" label="用户名" />
               <el-table-column prop="name" label="姓名" />
-              <el-table-column prop="gender" label="性别" />
-              <el-table-column prop="idCard" label="借书卡号" />
+              <el-table-column prop="email" label="邮箱" />
               <el-table-column prop="phone" label="手机号" />
-              <el-table-column prop="identity" label="身份" />
-              <el-table-column prop="bookCount" label="可借书数量" />
-              <el-table-column prop="state" label="用户状态">
-                <template #default="users">
-                  <span v-if="users.row.state === 1">正常</span>
-                  <span v-if="users.row.state === 0">冻结</span>
-                </template>
-              </el-table-column>
+              <el-table-column prop="borrow_num" label="已借书数量" />
+              <el-table-column prop="fine" label="违约金" />
               <el-table-column fixed="right" label="操作">
                 <template #default="users">
-                  <el-button
+                  <!-- <el-button
                     @click="editFromButton(editUserFormRef, users.row)"
-                    v-if="users.row.id !== 1"
                     type="text"
                     >编辑</el-button
-                  >
-                  <el-button
-                    @click="deleteUserDialog(users.row)"
-                    v-if="users.row.id !== 1"
-                    type="text"
+                  > -->
+                  <el-button @click="deleteUserDialog(users.row)" type="text"
                     >删除</el-button
                   >
                 </template>
@@ -116,13 +87,12 @@
             </el-pagination>
           </el-col>
         </el-row>
-
         <!--         添加用户表单 -->
         <el-dialog
           v-model="addUserFormVisible"
           title="添加用户"
           class="add-user-dialog"
-          width="500px"
+          width="750px"
           :close-on-click-modal="false"
         >
           <el-form
@@ -130,15 +100,45 @@
             :rules="userRules"
             ref="addUserFormRef"
             class="add-user-form"
-            ><el-form-item
-              label="邮箱"
+          >
+            <el-form-item
+              label="姓名"
               :label-width="formLabelWidth"
-              prop="username"
+              prop="name"
             >
               <el-input
-                v-model="addUserForm.username"
+                v-model="addUserForm.name"
                 autocomplete="off"
               ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="邮箱"
+              :label-width="formLabelWidth"
+              prop="email"
+            >
+              <el-input
+                v-model="addUserForm.email"
+                autocomplete="off"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              label="验证码"
+              :label-width="formLabelWidth"
+              prop="code"
+            >
+              <div class="flex-containerg">
+                <el-input
+                  v-model="addUserForm.code"
+                  autocomplete="off"
+                ></el-input>
+                <el-button
+                  type="warning"
+                  @click="addEmailButton(addUserFormRef)"
+                  class="button-with-spacing"
+                >
+                  获取验证码
+                </el-button>
+              </div>
             </el-form-item>
             <el-form-item
               label="密码"
@@ -152,14 +152,13 @@
               ></el-input>
             </el-form-item>
             <el-form-item
-              label="手机号"
+              label="电话号码"
               :label-width="formLabelWidth"
               prop="phone"
             >
               <el-input
-                v-model.number="addUserForm.phone"
+                v-model="addUserForm.phone"
                 autocomplete="off"
-                maxlength="11"
               ></el-input>
             </el-form-item>
           </el-form>
@@ -167,12 +166,11 @@
             <span class="dialog-footer">
               <el-button @click="addUserFormVisible = false">取消</el-button>
               <el-button type="primary" @click="addUserButton(addUserFormRef)">
-                添加
+                注册
               </el-button>
             </span>
           </template>
         </el-dialog>
-
         <!--        编辑用户表单-->
         <el-dialog
           v-model="editUserFormVisible"
@@ -365,29 +363,13 @@ import { ElMessageBox } from "element-plus";
 // 标签长度
 let formLabelWidth = 120;
 
-// 获取用户数据
-let users = ref();
-const getUser = () => {
-  axios
-    .get("http://localhost:8888/user/" + pageNum.value + "/" + pageSize.value)
-    .then((resp) => {
-      console.log(resp);
-      users.value = resp.data.content;
-      pageTotal.value = resp.data.totalElements;
-    });
-};
-
 // 显示数据数量选项
 let pageNum = ref(1);
 let pageSize = ref(10);
 let pageTotal = ref(0);
 const page = (val: number) => {
   pageNum.value = val;
-  if (searchInput.value == undefined) {
-    getUser();
-  } else {
-    searchUser();
-  }
+  searchUser();
 };
 
 // 数据显示框
@@ -408,31 +390,7 @@ let sizeOptions = [
 // 修改显示数据量
 const changeSize = (value: number) => {
   pageSize.value = value;
-  if (searchInput.value == undefined) {
-    getUser();
-  } else {
-    searchUser();
-  }
-};
-
-// 搜索框选项
-let searchModel = ref("username");
-let searchOptions = [
-  {
-    value: "username",
-    label: "用户名",
-  },
-  {
-    value: "idCard",
-    label: "借书卡号",
-  },
-  {
-    value: "phone",
-    label: "手机号",
-  },
-];
-const changeSearch = (value: string) => {
-  searchModel.value = value;
+  searchUser();
 };
 
 // 搜索框数据
@@ -442,94 +400,49 @@ const searchButton = () => {
   pageNum.value = 1;
   searchUser();
 };
+const users = ref();
 // 搜索用户
 const searchUser = () => {
-  if (searchInput.value != "") {
-    axios
-      .get(
-        "http://localhost:8888/user/search/" +
-          searchModel.value +
-          "/" +
-          searchInput.value +
-          "/" +
-          pageNum.value +
-          "/" +
-          pageSize.value
-      )
-      .then((resp) => {
-        users.value = resp.data.content;
-        pageTotal.value = resp.data.totalElements;
-      });
-  } else {
-    getUser();
-  }
+  let obj = {
+    page: pageNum.value,
+    per_page: pageSize.value,
+  };
+  axios.post("/api/manager/queryreader/", obj).then((resp) => {
+    users.value = resp.data.readers;
+    pageTotal.value = resp.data.total_count;
+  });
 };
-
+// 邮箱验证按钮
+const addEmailButton = (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+  formEl.validate((valid) => {
+    if (valid) {
+      axios.post("/api/reader/captcha/", addUserForm).then((resp) => {
+        console.log(resp);
+        const code = resp.data.code;
+        const message = resp.data.message;
+        // 添加失败
+        if (code == 400) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+          });
+        }
+        // 添加成功
+        if (code == 200) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+          });
+        }
+      });
+    } else {
+      return false;
+    }
+  });
+};
 // 用户表单判断
 const userRules = reactive<FormRules>({
-  groups: [{ required: true, message: "请选择组名称", trigger: "change" }],
-  username: [{ required: true, message: "请输入用户名称", trigger: "blur" }],
-  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
-  name: [{ required: true, message: "请输入用户姓名", trigger: "blur" }],
-  gender: [{ required: true, message: "请选择性别", trigger: "change" }],
-  idCard: [{ required: true, message: "请输入借书卡号", trigger: "blur" }],
-  phone: [{ required: true, message: "请输入手机号", trigger: "blur" }],
-  identity: [{ required: true, message: "请选择身份", trigger: "change" }],
-  bookCount: [
-    { required: true, message: "请输入可借阅图书数量", trigger: "blur" },
-  ],
-  state: [{ required: true, message: "请选择账号状态", trigger: "change" }],
+  email: [{ required: true, message: "请输入邮箱", trigger: "change" }],
 });
-
-// 选项框属性
-const UserType = ref([
-  {
-    typeId: 1,
-    typeName: "admin",
-    label: "管理员",
-  },
-  {
-    typeId: 2,
-    typeName: "user",
-    label: "用户",
-  },
-]);
-const GenderType = ref([
-  {
-    typeId: 1,
-    typeName: "男",
-  },
-  {
-    typeId: 2,
-    typeName: "女",
-  },
-]);
-const IdentityType = ref([
-  {
-    typeId: 1,
-    typeName: "管理员",
-  },
-  {
-    typeId: 2,
-    typeName: "学生",
-  },
-  {
-    typeId: 3,
-    typeName: "教师",
-  },
-]);
-const StateType = ref([
-  {
-    id: 1,
-    value: 1,
-    label: "正常",
-  },
-  {
-    id: 2,
-    value: 0,
-    label: "冻结",
-  },
-]);
 
 // 添加用户对话框显示
 let addUserFormVisible = ref(false);
@@ -543,14 +456,12 @@ const addFromButton = (formEl: FormInstance | undefined) => {
 // 添加用户表单
 const addUserFormRef = ref<FormInstance>();
 let addUserForm = reactive({
-  groups: "",
+  name: "",
+  email: "",
   username: "",
   password: "",
-  name: "",
-  gender: "",
-  idCard: "",
+  code: "",
   phone: "",
-  identity: "",
 });
 
 // 添加用户按钮
@@ -558,45 +469,25 @@ const addUserButton = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.validate((valid) => {
     if (valid) {
-      axios
-        .post("http://localhost:8888/user/save", addUserForm)
-        .then((resp) => {
-          const statusCode = resp.data.statusCode;
-
-          // 添加失败
-          if (statusCode == 0) {
-            ElMessageBox.alert("添加用户失败，请重试", "信息", {
-              confirmButtonText: "确认",
-            });
-          }
-          // 添加成功
-          if (statusCode == 1) {
-            ElMessageBox.alert("添加成功", "信息", {
-              confirmButtonText: "确认",
-              callback: () => {
-                addUserFormVisible.value = false;
-              },
-            });
-          }
-          // 用户名存在
-          if (statusCode == 2) {
-            ElMessageBox.alert("添加失败，此用户名已存在", "信息", {
-              confirmButtonText: "确认",
-            });
-          }
-          // 借书卡存在
-          if (statusCode == 3) {
-            ElMessageBox.alert("添加失败，此借书卡已存在", "信息", {
-              confirmButtonText: "确认",
-            });
-          }
-          // 手机号存在
-          if (statusCode == 4) {
-            ElMessageBox.alert("添加失败，此手机号已存在", "信息", {
-              confirmButtonText: "确认",
-            });
-          }
-        });
+      axios.post("/api/reader/register/", addUserForm).then((resp) => {
+        const code = resp.data.code;
+        const message = resp.data.message;
+        // 添加失败
+        if (code == 400) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+          });
+        }
+        // 添加成功
+        if (code == 200) {
+          ElMessageBox.alert(message, {
+            confirmButtonText: "确认",
+            callback: () => {
+              addUserFormVisible.value = false;
+            },
+          });
+        }
+      });
     } else {
       return false;
     }
@@ -710,11 +601,20 @@ const deleteUser = () => {
 
 // 初始化
 const init = () => {
-  getUser();
+  searchUser();
 };
 init();
 </script>
 
 <style lang="scss">
 @import "../assets/css/user";
+
+.flex-containerg {
+  display: flex; /* 使用Flex布局 */
+  max-width: 320px; /* 设置整体最大宽度 */
+}
+
+.button-with-spacing {
+  margin-left: 20px;
+}
 </style>

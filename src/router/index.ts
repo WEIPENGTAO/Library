@@ -111,12 +111,6 @@ const routes: Array<RouteRecordRaw> = [
         meta: { show: true },
         components: { about: AboutView },
       },
-      {
-        path: "/test",
-        name: "测试",
-        meta: { show: true },
-        components: { test: TestPageView },
-      },
     ],
   },
 ];

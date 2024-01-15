@@ -16,7 +16,7 @@
           >
         </el-card>
 
-        <!--    图书种类信息设置-->
+        <!--    图书种类信息设置
         <el-card>
           <template #header>
             <div class="card-header">
@@ -33,7 +33,7 @@
             @click="deleteBookTypeDialog(deleteBookTypeFormRef)"
             >删除图书种类</el-button
           >
-        </el-card>
+        </el-card> -->
 
         <!--        修改密码对话框-->
         <el-dialog

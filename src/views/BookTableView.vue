@@ -84,10 +84,13 @@
               <el-table-column fixed prop="id" label="Id" width="50" />
               <el-table-column prop="url" label="图书封面" width="100">
                 <template #default="scope">
-                  <el-image
-                    :src="scope.row.url"
-                    style="width: 100px; height: 120px"
-                  ></el-image>
+                  <viewer :images="scope.row.url">
+                    <img
+                      :src="scope.row.url"
+                      :key="scope.row.url"
+                      style="width: 100px; height: 120px"
+                    />
+                  </viewer>
                 </template>
               </el-table-column>
               <el-table-column prop="name" label="书名" width="150" />
@@ -379,6 +382,23 @@
                 maxlength="3"
               ></el-input>
             </el-form-item>
+            <el-form-item label="图书封面上传" prop="image">
+              <el-upload
+                class="box_upload"
+                action="/api/manager/addbooktable/"
+                name="image"
+                :http-request="uploadFile"
+                accept=""
+                list-type="picture"
+                :limit="1"
+                ref="uploadRef"
+                :show-file-list="true"
+                :on-change="imgPreview"
+                multiple
+              >
+                <el-button size="small" type="primary">点击上传</el-button>
+              </el-upload>
+            </el-form-item>
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -653,6 +673,7 @@ let editBookForm = reactive({
   num: "",
   label: "",
   id: "",
+  url: "",
 });
 
 // 编辑图书按钮
@@ -739,6 +760,7 @@ function uploadFile(param) {
   uploadForm1.append("image", param.file);
   axios.post("/api/manager/addurl", uploadForm1).then((resp) => {
     addBookForm.url = resp.data.url;
+    editBookForm.url = resp.data.url;
   });
 }
 function imgPreview(file, fileList) {

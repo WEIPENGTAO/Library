@@ -72,7 +72,14 @@
         <!--        图书表格栏-->
         <el-row class="book-table">
           <el-col>
-            <el-table :data="books" height="100%" empty-text="没有数据">
+            <el-table
+              ref="tableRef"
+              :data="books"
+              height="100%"
+              empty-text="没有数据"
+              @header-dragend="handleHeaderDragend"
+              border
+            >
               <el-table-column prop="book_id" label="图书ID" width="130" />
               <el-table-column prop="name" label="图书名称" />
               <el-table-column prop="ISBN" label="ISBN号码" width="170" />
@@ -195,6 +202,7 @@
                 v-model="editBookForm.status"
                 placeholder="请选择图书状态"
                 class="search-size"
+                @change="changeState"
               >
                 <el-option
                   v-for="item in statusOptions"
@@ -214,6 +222,7 @@
                 v-model="editBookForm.location"
                 placeholder="请选择存放位置"
                 class="search-size"
+                @change="changeLocation"
               >
                 <el-option
                   v-for="item in locationOptions"
@@ -245,6 +254,9 @@
           width="500px"
         >
           <span>确认删除 {{ deleteName }}</span>
+          <div>
+            <span>图书ID: {{ deleteId.book_id }}</span>
+          </div>
           <template #footer>
             <span class="dialog-footer">
               <el-button @click="deleteBookDialogVisible = false"
@@ -260,7 +272,8 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
+import { nextTick, reactive, ref, onMounted } from "vue";
+import Sortable from "sortablejs";
 import type { FormInstance, FormRules } from "element-plus";
 import { Plus, Search } from "@element-plus/icons-vue";
 import axios from "axios";
@@ -345,8 +358,8 @@ let searchOptions = [
     label: "图书名称",
   },
   {
-    value: "author",
-    label: "作者名称",
+    value: "status",
+    label: "图书状态",
   },
   {
     value: "publish",
@@ -377,9 +390,9 @@ const searchBook = () => {
       per_page: pageSize.value,
     };
   }
-  if (searchModel.value == "author") {
+  if (searchModel.value == "status") {
     searchObj = {
-      author: searchInput.value,
+      status: searchInput.value,
       page: pageNum.value,
       per_page: pageSize.value,
     };
@@ -429,23 +442,6 @@ const searchBook = () => {
   }
 };
 
-// 图书表单判断
-const checkISBN = (rule: any, value: any, callback: any) => {
-  if (!value) {
-    return callback(new Error("请输入ISBN号码"));
-  } else {
-    if (!Number.isInteger(value)) {
-      callback(new Error("请输入正确的ISBN号码"));
-    } else {
-      let isbnReg = /^[1-9]\d{12}$/;
-      if (!isbnReg.test(value)) {
-        callback(new Error("请输入13位ISBN号码"));
-      } else {
-        callback();
-      }
-    }
-  }
-};
 // 图书表单规则
 const bookRules = reactive<FormRules>({
   location: [{ required: true, message: "请输入存放位置", trigger: "blur" }],
@@ -593,13 +589,90 @@ const deleteBook = () => {
     });
   }
 };
-
+// 表格同步变化
+function changeState() {
+  if (editBookForm.status == "不外借") {
+    editBookForm.location = "图书阅览室";
+  } else {
+    editBookForm.location = "图书流通室";
+  }
+}
+function changeLocation() {
+  if (editBookForm.location == "图书阅览室") {
+    editBookForm.status = "不外借";
+  } else {
+    editBookForm.status = "未借出";
+  }
+}
 // 初始化
 const init = () => {
   // 获取图书
-  //searchBook();
+  searchBook();
 };
 init();
+// 表格可变长
+const tableData = reactive({
+  key: new Date().getTime(),
+  columnList: [
+    {
+      label: "ID",
+      prop: "id",
+      width: "180",
+    },
+    {
+      label: "Name",
+      prop: "name",
+      width: "180",
+    },
+    {
+      label: "Amount1",
+      prop: "amount1",
+      width: "180",
+    },
+    {
+      label: "Amount2",
+      prop: "amount2",
+      width: "180",
+    },
+    {
+      label: "Amount3",
+      prop: "amount3",
+      width: "180",
+    },
+  ],
+});
+const tableRef = ref();
+let sortable: Sortable;
+onMounted(() => {
+  initTableHeaderDrag(); // 初始化拖拽事件
+});
+
+function initTableHeaderDrag() {
+  if (sortable) {
+    sortable.destroy();
+  }
+  let el = tableRef.value.$el.querySelector(".el-table__header-wrapper tr");
+  sortable = Sortable.create(el, {
+    animation: 150,
+    onEnd(evt: any) {
+      const oldItem = tableData.columnList[evt.oldIndex];
+      tableData.columnList.splice(evt.oldIndex, 1);
+      tableData.columnList.splice(evt.newIndex, 0, oldItem);
+      tableData.key = new Date().getTime(); // 变更key，强制重绘table。如果不强制变更的话，会出现一些奇奇怪怪的问题，列宽度调整也会出现问题
+      nextTick(() => {
+        initTableHeaderDrag(); // 因为table被强制重新绘制，因此需要重新监听
+      });
+    },
+  });
+}
+function handleHeaderDragend(newWidth, oldWidth, column, event) {
+  for (let item of tableData.columnList) {
+    if (item.label == column.label) {
+      item.width = newWidth;
+    }
+  }
+  initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
+}
 </script>
 
 <style lang="scss">

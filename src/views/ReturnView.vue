@@ -62,7 +62,14 @@
         <!--        归还图书表格栏-->
         <el-row class="return-table">
           <el-col>
-            <el-table :data="borrows" height="100%" empty-text="没有数据">
+            <el-table
+              ref="tableRef"
+              :data="borrows"
+              height="100%"
+              empty-text="没有数据"
+              @header-dragend="handleHeaderDragend"
+              border
+            >
               <el-table-column fixed prop="book_id" label="图书ID" />
               <el-table-column prop="book_name" label="书名" />
               <el-table-column prop="author" label="作者" />
@@ -84,10 +91,14 @@
                 v-if="searchInput.status[0] != '已还'"
                 fixed="right"
                 label="操作"
+                width="200px"
               >
                 <template #default="borrows">
                   <el-button @click="returnBookDialog(borrows.row)" type="text"
                     >归还</el-button
+                  >
+                  <el-button @click="overtimeBookDao(borrows.row)" type="text"
+                    >发送归还图书提醒</el-button
                   >
                 </template>
               </el-table-column>
@@ -128,7 +139,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from "vue";
+import { nextTick, reactive, ref, onMounted } from "vue";
+import Sortable from "sortablejs";
 import { Search } from "@element-plus/icons-vue";
 import axios from "axios";
 import { ElMessageBox } from "element-plus";
@@ -230,12 +242,99 @@ const returnBook = () => {
     });
   }
 };
+// 邮箱还书
+const overtimeBookDao = (row: any) => {
+  let obj = {
+    reader_id: row.reader_id,
+    book_id: row.book_id,
+    book_name: row.book_name,
+  };
+  axios.post("/api/manager/returnnotice/", obj).then((resp) => {
+    const code = resp.data.code;
+    const message = resp.data.message;
 
+    // 取消预约失败
+    if (code == 400) {
+      ElMessageBox.alert(message, {
+        confirmButtonText: "确认",
+      });
+    }
+    // 取消预约成功
+    if (code == 200) {
+      ElMessageBox.alert(message, {
+        confirmButtonText: "确认",
+      });
+    }
+  });
+};
 // 初始化
 const init = () => {
   searchBorrow();
 };
 init();
+// 表格可变长
+const tableData = reactive({
+  key: new Date().getTime(),
+  columnList: [
+    {
+      label: "ID",
+      prop: "id",
+      width: "180",
+    },
+    {
+      label: "Name",
+      prop: "name",
+      width: "180",
+    },
+    {
+      label: "Amount1",
+      prop: "amount1",
+      width: "180",
+    },
+    {
+      label: "Amount2",
+      prop: "amount2",
+      width: "180",
+    },
+    {
+      label: "Amount3",
+      prop: "amount3",
+      width: "180",
+    },
+  ],
+});
+const tableRef = ref();
+let sortable: Sortable;
+onMounted(() => {
+  initTableHeaderDrag(); // 初始化拖拽事件
+});
+
+function initTableHeaderDrag() {
+  if (sortable) {
+    sortable.destroy();
+  }
+  let el = tableRef.value.$el.querySelector(".el-table__header-wrapper tr");
+  sortable = Sortable.create(el, {
+    animation: 150,
+    onEnd(evt: any) {
+      const oldItem = tableData.columnList[evt.oldIndex];
+      tableData.columnList.splice(evt.oldIndex, 1);
+      tableData.columnList.splice(evt.newIndex, 0, oldItem);
+      tableData.key = new Date().getTime(); // 变更key，强制重绘table。如果不强制变更的话，会出现一些奇奇怪怪的问题，列宽度调整也会出现问题
+      nextTick(() => {
+        initTableHeaderDrag(); // 因为table被强制重新绘制，因此需要重新监听
+      });
+    },
+  });
+}
+function handleHeaderDragend(newWidth, oldWidth, column, event) {
+  for (let item of tableData.columnList) {
+    if (item.label == column.label) {
+      item.width = newWidth;
+    }
+  }
+  initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
+}
 </script>
 
 <style lang="scss">
