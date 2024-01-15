@@ -49,7 +49,7 @@ def querylend():
 
         lend_info_serializable.append({
             'book_name': book_table_info.name,
-            'lend_date': lend.lend_date,
+            'lend_date': lend.lend_date.strftime('%Y-%m-%d %H:%M:%S'),
             'reader_id': lend.reader_id,
             'ISBN': book_table_info.ISBN,
             'book_id': book.book_id,
