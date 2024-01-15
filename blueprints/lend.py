@@ -71,8 +71,8 @@ def querylend():
 
 
 # 还书提醒
-@manager.route('/returnnotice/', methods=['POST'])
-def returnnotice():
+@manager.route('/returnnotices/', methods=['POST'])
+def returnnotices():
     lends = Lend.query.filter(Lend.due_date < time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                               Lend.status == '未归还').all()
     for lend in lends:

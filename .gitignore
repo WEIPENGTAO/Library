@@ -3,3 +3,6 @@
 sql
 .idea
 __pycache__
+blueprints/__pycache__
+models/__pycache__
+migration
