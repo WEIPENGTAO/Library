@@ -80,11 +80,39 @@
               @header-dragend="handleHeaderDragend"
               border
             >
-              <el-table-column prop="book_id" label="图书ID" width="130" />
+              <el-table-column
+                type="index"
+                :index="Nindex"
+                label="序号"
+                width="60"
+              ></el-table-column>
               <el-table-column prop="name" label="图书名称" />
-              <el-table-column prop="ISBN" label="ISBN号码" width="170" />
+              <el-table-column
+                prop="ISBN"
+                label="ISBN号码"
+                sortable
+                width="170"
+              />
               <el-table-column prop="location" label="存放位置" />
-              <el-table-column prop="status" label="状态" />
+              <el-table-column
+                prop="status"
+                label="状态"
+                :filters="[
+                  { text: '已借出', value: '已借出' },
+                  { text: '未借出', value: '未借出' },
+                  { text: '已预约', value: '已预约' },
+                ]"
+                :filter-method="filterTag"
+                filter-placement="bottom-end"
+              >
+                <template #default="scope">
+                  <el-tag
+                    :type="getStatusTagType(scope.row.status)"
+                    disable-transitions
+                    >{{ scope.row.status }}</el-tag
+                  >
+                </template>
+              </el-table-column>
               <el-table-column prop="publish" label="出版社" />
               <el-table-column prop="manager_by" label="经办人" />
               <el-table-column fixed="right" label="操作">
@@ -673,6 +701,50 @@ function handleHeaderDragend(newWidth, oldWidth, column, event) {
   }
   initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
 }
+// 状态颜色
+const filterTag = (value: string, row: string) => {
+  // 在filterTag中直接调用查询
+  let obj = {
+    status: value,
+    page: pageNum.value,
+    per_page: pageSize.value,
+  };
+  axios.post("/api/manager/querybook/", obj).then((resp) => {
+    books.value = resp.data.books;
+    pageTotal.value = resp.data.total_count;
+    const code = resp.data.code;
+    const message = resp.data.message;
+    // 查询失败
+    if (code == 400) {
+      ElMessage({
+        message: message,
+        type: "error",
+      });
+    }
+    // 查询成功
+    if (code == 200) {
+      tableRef.value.clearFilter();
+    }
+  });
+};
+function getStatusTagType(status: string) {
+  // 根据状态返回相应的颜色类型
+  if (status === "已借出") {
+    return "info"; // 设置已借出状态的颜色
+  } else if (status === "未借出") {
+    return "success"; // 设置正常状态的颜色
+  } else if (status === "已预约") {
+    return "error"; // 设置异常状态的颜色
+  } else {
+    return ""; // 默认情况
+  }
+}
+const Nindex = (index: number) => {
+  // 当前页数 - 1 * 每页数据条数 + 1
+  const page = pageNum.value; // 当前页码
+  const pagesize = pageSize.value; // 每页条数
+  return index + 1 + (page - 1) * pagesize;
+};
 </script>
 
 <style lang="scss">

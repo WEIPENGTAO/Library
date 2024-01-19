@@ -151,7 +151,6 @@ import { reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import axios from "axios";
 import { ElMessageBox } from "element-plus";
-import { removeClass } from "element-plus/es/utils";
 // 图书信息
 let book = reactive({
   name: "",

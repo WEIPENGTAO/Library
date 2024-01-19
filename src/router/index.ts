@@ -12,6 +12,8 @@ import ReturnView from "@/views/ReturnView.vue";
 import OvertimeView from "@/views/OvertimeView.vue";
 import UserView from "@/views/UserView.vue";
 import SystemView from "@/views/SystemView.vue";
+import BookDetail from "@/views/BookDetail.vue";
+import BookDetailPage from "@/views/BookDetailPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -110,6 +112,22 @@ const routes: Array<RouteRecordRaw> = [
         name: "关于",
         meta: { show: true },
         components: { about: AboutView },
+      },
+    ],
+  },
+  // 图书详情页容器
+  {
+    path: "/BookDetailPage",
+    name: "BookDetailPage",
+    meta: { show: false },
+    component: BookDetailPage,
+    children: [
+      {
+        // 图书详情页
+        path: "/BookDetail/:id",
+        name: "BookDetail",
+        meta: { show: false },
+        component: BookDetail,
       },
     ],
   },

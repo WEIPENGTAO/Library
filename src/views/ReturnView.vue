@@ -70,6 +70,12 @@
               @header-dragend="handleHeaderDragend"
               border
             >
+              <el-table-column
+                type="index"
+                :index="Nindex"
+                label="序号"
+                width="60"
+              ></el-table-column>
               <el-table-column fixed prop="book_id" label="图书ID" />
               <el-table-column prop="book_name" label="书名" />
               <el-table-column prop="author" label="作者" />
@@ -335,6 +341,12 @@ function handleHeaderDragend(newWidth, oldWidth, column, event) {
   }
   initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
 }
+const Nindex = (index: number) => {
+  // 当前页数 - 1 * 每页数据条数 + 1
+  const page = pageNum.value; // 当前页码
+  const pagesize = pageSize.value; // 每页条数
+  return index + 1 + (page - 1) * pagesize;
+};
 </script>
 
 <style lang="scss">

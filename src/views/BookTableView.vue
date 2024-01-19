@@ -81,7 +81,12 @@
               border
               style="width: 100%"
             >
-              <el-table-column fixed prop="id" label="Id" width="50" />
+              <el-table-column
+                type="index"
+                :index="Nindex"
+                label="序号"
+                width="60"
+              ></el-table-column>
               <el-table-column prop="url" label="图书封面" width="100">
                 <template #default="scope">
                   <viewer :images="scope.row.url">
@@ -93,7 +98,16 @@
                   </viewer>
                 </template>
               </el-table-column>
-              <el-table-column prop="name" label="书名" width="150" />
+              <el-table-column prop="name" label="书名" width="150">
+                <template v-slot="{ row }">
+                  <router-link
+                    :to="`/BookDetail/${row.ISBN}`"
+                    @click="handleClick(row.ISBN)"
+                  >
+                    {{ row.name }}
+                  </router-link>
+                </template>
+              </el-table-column>
               <el-table-column prop="author" label="作者" width="130" />
               <el-table-column prop="publish" label="出版商" width="130" />
               <el-table-column prop="ISBN" label="ISBN号码" width="170" />
@@ -838,6 +852,16 @@ function handleHeaderDragend(newWidth, oldWidth, column, event) {
     }
   }
   initTableHeaderDrag(); // 重新注册，防止变更宽度后无法拖动
+}
+const Nindex = (index: number) => {
+  // 当前页数 - 1 * 每页数据条数 + 1
+  const page = pageNum.value; // 当前页码
+  const pagesize = pageSize.value; // 每页条数
+  return index + 1 + (page - 1) * pagesize;
+};
+function handleClick(ISBN) {
+  // 在這裡執行點擊事件的相應操作，比如導航到指定頁面
+  router.push({ name: "BookDetail", params: { id: ISBN } });
 }
 </script>
 
